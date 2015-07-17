@@ -1,0 +1,304 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{979F9BCB-3878-45E8-B57A-53AC08455AB8}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>TerumoMIS.CoreLibrary</RootNamespace>
+    <AssemblyName>TerumoMIS.CoreLibrary</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Algorithm\HashCodePlus.cs" />
+    <Compile Include="Algorithm\QuickSortPlus.cs" />
+    <Compile Include="ArrayHeapPlus.cs" />
+    <Compile Include="ArrayPlus.cs" />
+    <Compile Include="ArrayPoolStruct.cs" />
+    <Compile Include="CharStreamPlus.cs" />
+    <Compile Include="CheckMemoryPlus.cs" />
+    <Compile Include="Code\AttributeMethodStruct.cs" />
+    <Compile Include="Code\Csharper\AjaxPlus.cs" />
+    <Compile Include="Code\Csharper\AsynchronousMethodPlus.cs" />
+    <Compile Include="Code\Csharper\DataModelPlus.cs" />
+    <Compile Include="Code\Csharper\DataSerializePlus.cs" />
+    <Compile Include="Code\Csharper\MemberMap.cs" />
+    <Compile Include="Code\Csharper\MemoryDataBaseModelPlus.cs" />
+    <Compile Include="Code\Csharper\SerializeBasePlus.cs" />
+    <Compile Include="Code\Csharper\SerializePlus.cs" />
+    <Compile Include="Code\Csharper\SerializeVersionEnum.cs" />
+    <Compile Include="Code\Csharper\SqlModelPlus.cs" />
+    <Compile Include="Code\Csharper\TcpBasePlus.cs" />
+    <Compile Include="Code\Csharper\TcpCallPlus.cs" />
+    <Compile Include="Code\Csharper\TcpServerPlus.cs" />
+    <Compile Include="Code\Csharper\WebCallPlus.cs" />
+    <Compile Include="Code\Csharper\WebPagePlus.cs" />
+    <Compile Include="Code\Csharper\WebViewPlus.cs" />
+    <Compile Include="Code\FieldIndexPlus.cs" />
+    <Compile Include="Code\FieldInfoPlus.cs" />
+    <Compile Include="Code\IgnoreMemberPlus.cs" />
+    <Compile Include="Code\IgnorePlus.cs" />
+    <Compile Include="Code\MemberFilterPlus.cs" />
+    <Compile Include="Code\MemberFiltersEnum.cs" />
+    <Compile Include="Code\MemberGroupPlus.cs" />
+    <Compile Include="Code\MemberIndexGroupStruct.cs" />
+    <Compile Include="Code\MemberIndexPlus.cs" />
+    <Compile Include="Code\MemberInfoPlus.cs" />
+    <Compile Include="Code\MemberMapPlus.cs" />
+    <Compile Include="Code\MemberTypePlus.cs" />
+    <Compile Include="Code\MethodInfoPlus.cs" />
+    <Compile Include="Code\ParameterInfoPlus.cs" />
+    <Compile Include="Code\PropertyIndexPlus.cs" />
+    <Compile Include="Code\PropertyInfoPlus.cs" />
+    <Compile Include="Code\RemoteTypeStruct.cs" />
+    <Compile Include="Code\TemplatePlus.cs" />
+    <Compile Include="Code\TestCasePlus.cs" />
+    <Compile Include="Code\TreeBuilderPlus.cs" />
+    <Compile Include="Code\TypeAttributePlus.cs" />
+    <Compile Include="Code\WebConfigPlus.cs" />
+    <Compile Include="CollectionPlus.cs" />
+    <Compile Include="Config\AppSettingPlus.cs" />
+    <Compile Include="Config\DataBasePlus.cs" />
+    <Compile Include="Config\FileBlockPlus.cs" />
+    <Compile Include="Config\HttpPlus.cs" />
+    <Compile Include="Config\MemoryDataBasePlus.cs" />
+    <Compile Include="Config\ProcessCopyPlus.cs" />
+    <Compile Include="Config\PubPlus.cs" />
+    <Compile Include="Config\SqlPlus.cs" />
+    <Compile Include="Config\TcpCommandPlus.cs" />
+    <Compile Include="Config\TcpRegisterPlus.cs" />
+    <Compile Include="Config\WebPlus.cs" />
+    <Compile Include="CsharpPlus.cs" />
+    <Compile Include="DatePlus.cs" />
+    <Compile Include="Delegate.cs" />
+    <Compile Include="Diagnostics\ProcessCopyServerPlus.cs" />
+    <Compile Include="DictionaryPlus.cs" />
+    <Compile Include="DirectoyPlus.cs" />
+    <Compile Include="DomainUnloadPlus.cs" />
+    <Compile Include="DotNet45\MethodImplAttributePlus.cs" />
+    <Compile Include="DotNet45\MethodImplOptionsEnum.cs" />
+    <Compile Include="DynamicArrayPlus.cs" />
+    <Compile Include="Emit\BinaryDeSerializerPlus.cs" />
+    <Compile Include="Emit\BinarySerializePlus.cs" />
+    <Compile Include="Emit\BinarySerializerPlus.cs" />
+    <Compile Include="Emit\ConstructorPlus.cs" />
+    <Compile Include="Emit\DataBaseModelPlus.cs" />
+    <Compile Include="Emit\DataDeSerializerPlus.cs" />
+    <Compile Include="Emit\DataMemberPlus.cs" />
+    <Compile Include="Emit\DataSerializePlus.cs" />
+    <Compile Include="Emit\DataSerializerPlus.cs" />
+    <Compile Include="Emit\IndexDeSerializerPlus.cs" />
+    <Compile Include="Emit\IndexSerializePlus.cs" />
+    <Compile Include="Emit\IndexSerializerPlus.cs" />
+    <Compile Include="Emit\JsonNodeStruct.cs" />
+    <Compile Include="Emit\JsonParsePlus.cs" />
+    <Compile Include="Emit\JsonParserPlus.cs" />
+    <Compile Include="Emit\JsonSerializePlus.cs" />
+    <Compile Include="Emit\JsonSerializerPlus.cs" />
+    <Compile Include="Emit\MemberCopyerPlus.cs" />
+    <Compile Include="Emit\MemberCopyPlus.cs" />
+    <Compile Include="Emit\MemoryDataBaseModelPlus.cs" />
+    <Compile Include="Emit\MemoryDataBaseTablePlus.cs" />
+    <Compile Include="Emit\NumberToCharStreamPlus.cs" />
+    <Compile Include="Emit\PubPlus.cs" />
+    <Compile Include="Emit\SqlColumnPlus.cs" />
+    <Compile Include="Emit\SqlModelPlus.cs" />
+    <Compile Include="Emit\SqlTablePlus.cs" />
+    <Compile Include="EnumPlus.cs" />
+    <Compile Include="FifoPriorityQueuePlus.cs" />
+    <Compile Include="FixedMapStruct.cs" />
+    <Compile Include="GuidStruct.cs" />
+    <Compile Include="HashBytesStruct.cs" />
+    <Compile Include="HashSetPlus.cs" />
+    <Compile Include="HashStringStruct.cs" />
+    <Compile Include="ICollectionStruct.cs" />
+    <Compile Include="IEnumerablePlus.cs" />
+    <Compile Include="IEnumeratorPlus.cs" />
+    <Compile Include="IO\Compression\CompressionStreamPlus.cs" />
+    <Compile Include="IO\CreateFileTimeoutWatcherPlus.cs" />
+    <Compile Include="IO\FileBlockServerPlus.cs" />
+    <Compile Include="IO\FileBlockStreamPlus.cs" />
+    <Compile Include="IO\FilePlus.cs" />
+    <Compile Include="IO\FileStreamWriterPlus.cs" />
+    <Compile Include="KeyValueStruct.cs" />
+    <Compile Include="ListPlus.cs" />
+    <Compile Include="LogPlus.cs" />
+    <Compile Include="MemoryDataBase\Cache\LoadCachePlus.cs" />
+    <Compile Include="MemoryDataBase\PhysicalOldPlus.cs" />
+    <Compile Include="MemoryDataBase\PhysicalPlus.cs" />
+    <Compile Include="MemoryDataBase\PhysicalServerPlus.cs" />
+    <Compile Include="MemoryDataBase\PhysicalSetPlus.cs" />
+    <Compile Include="MemoryPlus.cs" />
+    <Compile Include="MemoryPoolPlus.cs" />
+    <Compile Include="MemoryStreamPlus.cs" />
+    <Compile Include="Net\ClientQueuePlus.cs" />
+    <Compile Include="Net\ClientSocketQueuePlus.cs" />
+    <Compile Include="Net\Ipv6HashStruct.cs" />
+    <Compile Include="Net\SocketAsyncEventArgsPlus.cs" />
+    <Compile Include="Net\SocketPlus.cs" />
+    <Compile Include="Net\TCP\ClientPlus.cs" />
+    <Compile Include="Net\TCP\CommandClientPlus.cs" />
+    <Compile Include="Net\TCP\CommandLoadBalancingServerPlus.cs" />
+    <Compile Include="Net\TCP\CommandServerPlus.cs" />
+    <Compile Include="Net\TCP\CommandSocketPlus.cs" />
+    <Compile Include="Net\TCP\HostStruct.cs" />
+    <Compile Include="Net\TCP\HTTP\BufferIndexStruct.cs" />
+    <Compile Include="Net\TCP\HTTP\CookiePlus.cs" />
+    <Compile Include="Net\TCP\HTTP\DomainPlus.cs" />
+    <Compile Include="Net\TCP\HTTP\DomainServerPlus.cs" />
+    <Compile Include="Net\TCP\HTTP\ForwardProxyPlus.cs" />
+    <Compile Include="Net\TCP\HTTP\RequestFormPlus.cs" />
+    <Compile Include="Net\TCP\HTTP\RequestHeaderPlus.cs" />
+    <Compile Include="Net\TCP\HTTP\ResponsePlus.cs" />
+    <Compile Include="Net\TCP\HTTP\ServerPlus.cs" />
+    <Compile Include="Net\TCP\HTTP\ServersPlus.cs" />
+    <Compile Include="Net\TCP\HTTP\Session.cs" />
+    <Compile Include="Net\TCP\HTTP\Socket.cs" />
+    <Compile Include="Net\TCP\HTTP\SslServerPlus.cs" />
+    <Compile Include="Net\TCP\HTTP\SslStreamPlus.cs" />
+    <Compile Include="Net\TCP\ServerPlus.cs" />
+    <Compile Include="Net\TCP\TcpRegisterPlus.cs" />
+    <Compile Include="Net\TCP\VerifyMethodPlus.cs" />
+    <Compile Include="Net\TimeoutQueuePlus.cs" />
+    <Compile Include="NullValuePlus.cs" />
+    <Compile Include="NumberPlus.cs" />
+    <Compile Include="ObjectPoolStruct.cs" />
+    <Compile Include="ObjectReferenceStruct.cs" />
+    <Compile Include="PointerStruct.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PubPlus.cs" />
+    <Compile Include="RandomPlus.cs" />
+    <Compile Include="Reflection\AssemblyPlus.cs" />
+    <Compile Include="Reflection\ConverterPlus.cs" />
+    <Compile Include="Reflection\CreateFieldPlus.cs" />
+    <Compile Include="Reflection\CreatePropertyPlus.cs" />
+    <Compile Include="Reflection\FieldGetValuePlus.cs" />
+    <Compile Include="Reflection\FieldInfoPlus.cs" />
+    <Compile Include="Reflection\FieldSetValuePlus.cs" />
+    <Compile Include="Reflection\MemberInfoPlus.cs" />
+    <Compile Include="Reflection\MethodDelegatePlus.cs" />
+    <Compile Include="Reflection\MethodInfoPlus.cs" />
+    <Compile Include="Reflection\PropertyCopyerPlus.cs" />
+    <Compile Include="Reflection\PropertyGetterPlus.cs" />
+    <Compile Include="Reflection\PropertySetterPlus.cs" />
+    <Compile Include="Reflection\StaticMethodDelegatePlus.cs" />
+    <Compile Include="Reflection\TypePlus.cs" />
+    <Compile Include="RunPlus.cs" />
+    <Compile Include="SQL\ClientPlus.cs" />
+    <Compile Include="SQL\ColumnCollectionPlus.cs" />
+    <Compile Include="SQL\ColumnPlus.cs" />
+    <Compile Include="SQL\ConnectionPlus.cs" />
+    <Compile Include="SQL\Excel\ClientPlus.cs" />
+    <Compile Include="SQL\Excel\ConnectionPlus.cs" />
+    <Compile Include="SQL\Excel\SqlDbTypePlus.cs" />
+    <Compile Include="SQL\ExpressionCallPlus.cs" />
+    <Compile Include="SQL\Expression\BinaryExpressionPlus.cs" />
+    <Compile Include="SQL\Expression\ConditionalExpressionPlus.cs" />
+    <Compile Include="SQL\Expression\ConstantConverterPlus.cs" />
+    <Compile Include="SQL\Expression\ConstantExpressionPro.cs" />
+    <Compile Include="SQL\Expression\ConverterPlus.cs" />
+    <Compile Include="SQL\Expression\ConvertExpressionPlus.cs" />
+    <Compile Include="SQL\Expression\ExpressionConverterPlus.cs" />
+    <Compile Include="SQL\Expression\ExpressionPlus.cs" />
+    <Compile Include="SQL\Expression\ExpressionTypeEnum.cs" />
+    <Compile Include="SQL\Expression\FieldExpressionPlus.cs" />
+    <Compile Include="SQL\Expression\LambdaExpressionPlus.cs" />
+    <Compile Include="SQL\Expression\LogicConstantExpressionPlus.cs" />
+    <Compile Include="SQL\Expression\MemberExpressionPlus.cs" />
+    <Compile Include="SQL\Expression\MethodCallExpressionPlus.cs" />
+    <Compile Include="SQL\Expression\ParameterExpressionPlus.cs" />
+    <Compile Include="SQL\Expression\PoolPlus.cs" />
+    <Compile Include="SQL\Expression\PropertyExpressionPlus.cs" />
+    <Compile Include="SQL\Expression\UnaryExpressionPlus.cs" />
+    <Compile Include="SQL\FileBlockMemberStruct.cs" />
+    <Compile Include="SQL\JsonMemberStruct.cs" />
+    <Compile Include="SQL\MSSQL\ConverterPlus.cs" />
+    <Compile Include="SQL\MSSQL\ExpressionConverterPlus.cs" />
+    <Compile Include="SQL\MSSQL\Sql2000.cs" />
+    <Compile Include="SQL\MSSQL\Sql2005.cs" />
+    <Compile Include="SQL\MSSQL\SqlDbTypePlus.cs" />
+    <Compile Include="SQL\MYSQL\ClientPlus.cs" />
+    <Compile Include="SQL\MYSQL\ConverterPlus.cs" />
+    <Compile Include="SQL\MYSQL\ExpressionConverterPlus.cs" />
+    <Compile Include="SQL\MYSQL\SqlDbTypePlus.cs" />
+    <Compile Include="SQL\SelectQueryPlus.cs" />
+    <Compile Include="SQL\SqlDbTypePlus.cs" />
+    <Compile Include="SQL\TablePlus.cs" />
+    <Compile Include="SQL\TypeInfoPlus.cs" />
+    <Compile Include="StringPlus.cs" />
+    <Compile Include="SubArrayPlus.cs" />
+    <Compile Include="SubStringStruct.cs" />
+    <Compile Include="Threading\AutoWaitHandleStruct.cs" />
+    <Compile Include="Threading\CallBackActionPoolPlus.cs" />
+    <Compile Include="Threading\InterlockedPlus.cs" />
+    <Compile Include="Threading\QueuePlus.cs" />
+    <Compile Include="Threading\TaskInfoStruct.cs" />
+    <Compile Include="Threading\TaskPlus.cs" />
+    <Compile Include="Threading\ThreadPlus.cs" />
+    <Compile Include="Threading\ThreadPoolPlus.cs" />
+    <Compile Include="Threading\TimerTaskPlus.cs" />
+    <Compile Include="TypePoolPlus.cs" />
+    <Compile Include="UniqueDictionaryPlus.cs" />
+    <Compile Include="UniqueHashSetPlus.cs" />
+    <Compile Include="{TmphCoreLib}.cs" />
+    <Compile Include="Uint128Struct.cs" />
+    <Compile Include="UnmanagedPlus.cs" />
+    <Compile Include="UnmanagedPoolPlus.cs" />
+    <Compile Include="UnmanagedStreamPlus.cs" />
+    <Compile Include="Unsafe\ArrayUnsafe.cs" />
+    <Compile Include="Unsafe\MemoryUnsafe.cs" />
+    <Compile Include="Unsafe\NumberUnsafe.cs" />
+    <Compile Include="Unsafe\StreamUnsafe.cs" />
+    <Compile Include="Unsafe\StringUnsafe.cs" />
+    <Compile Include="Web\AjaxPlus.cs" />
+    <Compile Include="Web\ContentTypePlus.cs" />
+    <Compile Include="Web\DomainPlus.cs" />
+    <Compile Include="Web\FormQueryPlus.cs" />
+    <Compile Include="Web\HeaderPlus.cs" />
+    <Compile Include="Web\HtmlPlus.cs" />
+    <Compile Include="Web\HttpPlus.cs" />
+    <Compile Include="Windows32\Kernel32.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="{Remember.TmphCoreLib}.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
