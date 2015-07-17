@@ -256,7 +256,13 @@
     <Compile Include="SQL\SqlDbTypePlus.cs" />
     <Compile Include="SQL\TablePlus.cs" />
     <Compile Include="SQL\TypeInfoPlus.cs" />
+    <Compile Include="StaticDictionaryPlus.cs" />
+    <Compile Include="StaticHashIndexPlus.cs" />
+    <Compile Include="StaticHashPlus.cs" />
+    <Compile Include="StaticSearcherPlus.cs" />
+    <Compile Include="StringBuilderPlus.cs" />
     <Compile Include="StringPlus.cs" />
+    <Compile Include="StringPoolPlus.cs" />
     <Compile Include="SubArrayPlus.cs" />
     <Compile Include="SubStringStruct.cs" />
     <Compile Include="Threading\AutoWaitHandleStruct.cs" />
