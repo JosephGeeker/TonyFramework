@@ -18,31 +18,25 @@
 //==============================================================
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TerumoMIS.CoreLibrary.Code
 {
     /// <summary>
-    /// 禁止安装属性
+    ///     禁止安装属性
     /// </summary>
-    public abstract class IgnoreMemberPlus:Attribute
+    public abstract class IgnoreMemberPlus : Attribute
     {
         /// <summary>
-        /// 是否禁止当前安装
+        ///     是否禁止当前安装
         /// </summary>
         public bool IsIgnoreCurrent;
+
         /// <summary>
-        /// 是否安装
+        ///     是否安装
         /// </summary>
         public bool IsSetup
         {
-            get
-            {
-                return !IsIgnoreCurrent;
-            }
+            get { return !IsIgnoreCurrent; }
         }
     }
 }

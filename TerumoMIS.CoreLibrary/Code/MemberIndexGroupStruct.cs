@@ -19,11 +19,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace TerumoMIS.CoreLibrary.Code
 {
@@ -43,19 +40,19 @@ namespace TerumoMIS.CoreLibrary.Code
         /// <summary>
         /// 公有动态字段
         /// </summary>
-        internal readonly FieldIndexPlus[] PublicFields;
+        internal readonly MemberIndexPlus[] PublicFields;
         /// <summary>
         /// 非公有动态字段
         /// </summary>
-        internal readonly FieldIndexPlus[] NonPublicFields;
+        internal readonly MemberIndexPlus[] NonPublicFields;
         /// <summary>
         /// 公有动态属性
         /// </summary>
-        internal readonly propertyIndex[] PublicProperties;
+        internal readonly MemberIndexPlus[] PublicProperties;
         /// <summary>
         /// 非公有动态属性
         /// </summary>
-        internal readonly propertyIndex[] NonPublicProperties;
+        internal readonly MemberIndexPlus[] NonPublicProperties;
         /// <summary>
         /// 所有成员数量
         /// </summary>
@@ -66,27 +63,27 @@ namespace TerumoMIS.CoreLibrary.Code
         /// <param name="type">对象类型</param>
         private MemberIndexGroupStruct(Type type)
         {
-            int index = 0;
+            var index = 0;
             if (type.IsEnum)
             {
                 PublicFields = type.GetFields(BindingFlags.Public | BindingFlags.Static).GetArray(member => new FieldIndexPlus(member, MemberFiltersEnum.PublicStaticField, index++));
                 NonPublicFields = NullValuePlus<FieldIndexPlus>.Array;
-                PublicProperties = NonPublicProperties = NullValuePlus<propertyIndex>.Array;
+                PublicProperties = NonPublicProperties = NullValuePlus<PropertyIndexPlus>.Array;
             }
             else
             {
-                MemberIndexPlus.GroupStruct group = new MemberIndexPlus.GroupStruct(type);
+                var group = new MemberIndexPlus.GroupStruct(type);
                 if (type.getTypeName() == null)
                 {
-                    PublicFields = group.PublicFields.Sort((left, right) => left.Name.CompareTo(right.Name)).GetArray(value => new FieldIndexPlus(value, MemberFiltersEnum.PublicInstanceField, index++));
-                    NonPublicFields = group.NonPublicFields.Sort((left, right) => left.Name.CompareTo(right.Name)).GetArray(value => new FieldIndexPlus(value, MemberFiltersEnum.NonPublicInstanceField, index++));
-                    PublicProperties = group.PublicProperties.Sort((left, right) => left.Name.CompareTo(right.Name)).GetArray(value => new propertyIndex(value, MemberFiltersEnum.PublicInstanceProperty, index++));
-                    NonPublicProperties = group.NonPublicProperties.Sort((left, right) => left.Name.CompareTo(right.Name)).GetArray(value => new propertyIndex(value, MemberFiltersEnum.NonPublicInstanceProperty, index++));
+                    PublicFields = group.PublicFields.Sort((left, right) => string.Compare(left.Name, right.Name, StringComparison.Ordinal)).GetArray(value => new FieldIndexPlus(value, MemberFiltersEnum.PublicInstanceField, index++));
+                    NonPublicFields = group.NonPublicFields.Sort((left, right) => string.Compare(left.Name, right.Name, StringComparison.Ordinal)).GetArray(value => new FieldIndexPlus(value, MemberFiltersEnum.NonPublicInstanceField, index++));
+                    PublicProperties = group.PublicProperties.Sort((left, right) => string.Compare(left.Name, right.Name, StringComparison.Ordinal)).GetArray(value => new PropertyIndexPlus(value, MemberFiltersEnum.PublicInstanceProperty, index++));
+                    NonPublicProperties = group.NonPublicProperties.Sort((left, right) => string.Compare(left.Name, right.Name, StringComparison.Ordinal)).GetArray(value => new PropertyIndexPlus(value, MemberFiltersEnum.NonPublicInstanceProperty, index++));
                 }
                 else
                 {
                     PublicFields = NonPublicFields = NullValuePlus<FieldIndexPlus>.Array;
-                    PublicProperties = NonPublicProperties = NullValuePlus<propertyIndex>.Array;
+                    PublicProperties = NonPublicProperties = NullValuePlus<PropertyIndexPlus>.Array;
                 }
             }
             MemberCount = index;
@@ -112,22 +109,22 @@ namespace TerumoMIS.CoreLibrary.Code
         /// <summary>
         /// 根据类型获取成员信息集合
         /// </summary>
-        /// <typeparam name="attributeType">自定义属性类型</typeparam>
+        /// <typeparam name="TAttributeType">自定义属性类型</typeparam>
         /// <param name="filter">成员选择</param>
         /// <returns>成员信息集合</returns>
-        internal MemberIndexPlus[] Find<attributeType>(attributeType filter) where attributeType : MemberFilterPlus
+        internal MemberIndexPlus[] Find<TAttributeType>(TAttributeType filter) where TAttributeType : MemberFilterPlus
         {
-            return Find(filter.MemberFilter).GetFindArray(value => filter.IsAttribute ? value.IsAttribute<attributeType>(filter.IsBaseTypeAttribute, filter.IsInheritAttribute) : !value.IsIgnoreAttribute<attributeType>(filter.IsBaseTypeAttribute, filter.IsInheritAttribute));
+            return Find(filter.MemberFilter).GetFindArray(value => filter.IsAttribute ? value.IsAttribute<TAttributeType>(filter.IsBaseTypeAttribute, filter.IsInheritAttribute) : !value.IsIgnoreAttribute<TAttributeType>(filter.IsBaseTypeAttribute, filter.IsInheritAttribute));
         }
         /// <summary>
         /// 根据类型获取成员信息集合
         /// </summary>
-        /// <typeparam name="attributeType">自定义属性类型</typeparam>
+        /// <typeparam name="TAttributeType">自定义属性类型</typeparam>
         /// <param name="filter">成员选择</param>
         /// <returns>成员信息集合</returns>
-        internal MemberIndexPlus[] Find<attributeType>(MemberFilterPlus filter) where attributeType : IgnoreMemberPlus
+        internal MemberIndexPlus[] Find<TAttributeType>(MemberFilterPlus filter) where TAttributeType : IgnoreMemberPlus
         {
-            return Find(filter.MemberFilter).GetFindArray(value => filter.IsAttribute ? value.IsAttribute<attributeType>(filter.IsBaseTypeAttribute, filter.IsInheritAttribute) : !value.IsIgnoreAttribute<attributeType>(filter.IsBaseTypeAttribute, filter.IsInheritAttribute));
+            return Find(filter.MemberFilter).GetFindArray(value => filter.IsAttribute ? value.IsAttribute<TAttributeType>(filter.IsBaseTypeAttribute, filter.IsInheritAttribute) : !value.IsIgnoreAttribute<TAttributeType>(filter.IsBaseTypeAttribute, filter.IsInheritAttribute));
         }
         /// <summary>
         /// 根据类型获取成员索引分组
@@ -169,7 +166,7 @@ namespace TerumoMIS.CoreLibrary.Code
         /// </summary>
         public static MemberIndexPlus[] GetAllMembers()
         {
-            SubArrayStruct<MemberIndexPlus> members = new SubArrayStruct<MemberIndexPlus>(MemberCount);
+            var members = new SubArrayStruct<MemberIndexPlus>(MemberCount);
             members.Add(Group.PublicFields.toGeneric<MemberIndexPlus>());
             members.Add(Group.NonPublicFields.toGeneric<MemberIndexPlus>());
             members.Add(Group.PublicProperties.toGeneric<MemberIndexPlus>());
@@ -181,30 +178,30 @@ namespace TerumoMIS.CoreLibrary.Code
         /// </summary>
         /// <param name="memberFilter">成员选择类型</param>
         /// <returns></returns>
-        public static fieldIndex[] GetFields(memberFilters memberFilter = memberFilters.InstanceField)
+        public static FieldIndexPlus[] GetFields(MemberFiltersEnum memberFilter = MemberFiltersEnum.InstanceField)
         {
-            if ((memberFilter & memberFilters.PublicInstanceField) == 0)
+            if ((memberFilter & MemberFiltersEnum.PublicInstanceField) == 0)
             {
-                if ((memberFilter & memberFilters.NonPublicInstanceField) == 0) return nullValue<fieldIndex>.Array;
+                if ((memberFilter & MemberFiltersEnum.NonPublicInstanceField) == 0) return NullValuePlus<FieldIndexPlus>.Array;
                 return Group.NonPublicFields;
             }
-            else if ((memberFilter & memberFilters.NonPublicInstanceField) == 0) return Group.PublicFields;
-            return Group.PublicFields.concat(Group.NonPublicFields);
+            else if ((memberFilter & MemberFiltersEnum.NonPublicInstanceField) == 0) return Group.PublicFields;
+            return Group.PublicFields.Concat(Group.NonPublicFields);
         }
         /// <summary>
         /// 获取属性集合
         /// </summary>
         /// <param name="memberFilter">成员选择类型</param>
         /// <returns></returns>
-        public static propertyIndex[] GetProperties(memberFilters memberFilter = memberFilters.InstanceField)
+        public static PropertyIndexPlus[] GetProperties(MemberFiltersEnum memberFilter = MemberFiltersEnum.InstanceField)
         {
-            if ((memberFilter & memberFilters.PublicInstanceProperty) == 0)
+            if ((memberFilter & MemberFiltersEnum.PublicInstanceProperty) == 0)
             {
-                if ((memberFilter & memberFilters.NonPublicInstanceProperty) == 0) return nullValue<propertyIndex>.Array;
+                if ((memberFilter & MemberFiltersEnum.NonPublicInstanceProperty) == 0) return NullValuePlus<PropertyIndexPlus>.Array;
                 return Group.NonPublicProperties;
             }
-            else if ((memberFilter & memberFilters.NonPublicInstanceProperty) == 0) return Group.PublicProperties;
-            return Group.PublicProperties.concat(Group.NonPublicProperties);
+            else if ((memberFilter & MemberFiltersEnum.NonPublicInstanceProperty) == 0) return Group.PublicProperties;
+            return Group.PublicProperties.Concat(Group.NonPublicProperties);
         }
     }
 }

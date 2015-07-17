@@ -19,12 +19,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+using TerumoMIS.CoreLibrary.Code;
 
 namespace TerumoMIS.CoreLibrary.Emit
 {
@@ -61,7 +59,7 @@ namespace TerumoMIS.CoreLibrary.Emit
             {
                 get
                 {
-                    int value = base.HeaderValue;
+                    var value = base.HeaderValue;
                     if (IsRealType) value += ObjectRealTypeValue;
                     return value;
                 }
@@ -101,11 +99,11 @@ namespace TerumoMIS.CoreLibrary.Emit
                 /// 是否值类型
                 /// </summary>
                 private bool _isValueType;
+
                 /// <summary>
                 /// 动态函数
                 /// </summary>
                 /// <param name="type"></param>
-                /// <param name="name">成员类型</param>
                 public MemberDynamicMethodStruct(Type type)
                 {
                     _dynamicMethod = new DynamicMethod("DataSerializerPlus", null, new[] { typeof(DataSerializerPlus), type }, type, true);
@@ -116,13 +114,13 @@ namespace TerumoMIS.CoreLibrary.Emit
                 /// 添加字段
                 /// </summary>
                 /// <param name="field">字段信息</param>
-                public void Push(fieldInfo field)
+                public void Push(FieldInfoPlus field)
                 {
                     _generator.Emit(OpCodes.Ldarg_0);
                     if (_isValueType) _generator.Emit(OpCodes.Ldarga_S, 1);
                     else _generator.Emit(OpCodes.Ldarg_1);
                     _generator.Emit(OpCodes.Ldfld, field.Field);
-                    MethodInfo method = DataSerializerPlus.getMemberSerializeMethod(field.Field.FieldType) ?? GetMemberSerializer(field.Field.FieldType);
+                    MethodInfo method = getMemberSerializeMethod(field.Field.FieldType) ?? GetMemberSerializer(field.Field.FieldType);
                     _generator.Emit(method.IsFinal || !method.IsVirtual ? OpCodes.Call : OpCodes.Callvirt, method);
                 }
                 /// <summary>
@@ -159,7 +157,7 @@ namespace TerumoMIS.CoreLibrary.Emit
                 /// <param name="type"></param>
                 public MemberMapDynamicMethodStruct(Type type)
                 {
-                    _dynamicMethod = new DynamicMethod("dataMemberMapSerializer", null, new[] { typeof(memberMap), typeof(DataSerializerPlus), type }, type, true);
+                    _dynamicMethod = new DynamicMethod("dataMemberMapSerializer", null, new[] { typeof(MemberMapPlus), typeof(DataSerializerPlus), type }, type, true);
                     _generator = _dynamicMethod.GetILGenerator();
                     _isValueType = type.IsValueType;
                 }
@@ -167,19 +165,19 @@ namespace TerumoMIS.CoreLibrary.Emit
                 /// 添加字段
                 /// </summary>
                 /// <param name="field">字段信息</param>
-                public void Push(fieldInfo field)
+                public void Push(FieldInfoPlus field)
                 {
-                    Label end = _generator.DefineLabel();
+                    var end = _generator.DefineLabel();
                     _generator.Emit(OpCodes.Ldarg_0);
                     _generator.Emit(OpCodes.Ldc_I4, field.MemberIndex);
-                    _generator.Emit(OpCodes.Callvirt, pub.MemberMapIsMemberMethod);
+                    _generator.Emit(OpCodes.Callvirt, PubPlus.MemberMapIsMemberMethod);
                     _generator.Emit(OpCodes.Brfalse_S, end);
 
                     _generator.Emit(OpCodes.Ldarg_1);
                     if (_isValueType) _generator.Emit(OpCodes.Ldarga_S, 2);
                     else _generator.Emit(OpCodes.Ldarg_2);
                     _generator.Emit(OpCodes.Ldfld, field.Field);
-                    MethodInfo method = DataSerializerPlus.getMemberMapSerializeMethod(field.Field.FieldType) ?? GetMemberSerializer(field.Field.FieldType);
+                    var method = getMemberMapSerializeMethod(field.Field.FieldType) ?? GetMemberSerializer(field.Field.FieldType);
                     _generator.Emit(method.IsFinal || !method.IsVirtual ? OpCodes.Call : OpCodes.Callvirt, method);
 
                     _generator.MarkLabel(end);
@@ -199,24 +197,24 @@ namespace TerumoMIS.CoreLibrary.Emit
             /// 获取字段成员集合
             /// </summary>
             /// <returns>字段成员集合</returns>
-            public static fields<fieldInfo> GetFields(fieldIndex[] fieldIndexs, out int memberCountVerify)
+            public static FieldsStruct<FieldInfoPlus> GetFields(FieldIndexPlus[] fieldIndexPluss, out int memberCountVerify)
             {
-                SubArrayStruct<fieldInfo> fixedFields = new SubArrayStruct<fieldInfo>(fieldIndexs.Length), fields = new SubArrayStruct<fieldInfo>();
-                SubArrayStruct<fieldIndex> jsonFields = new SubArrayStruct<fieldIndex>();
-                fields.UnsafeSet(fixedFields.array, fixedFields.array.length(), 0);
-                int fixedSize = 0;
-                foreach (fieldIndex field in fieldIndexs)
+                SubArrayStruct<FieldInfoPlus> fixedFields = new SubArrayStruct<FieldInfoPlus>(fieldIndexPluss.Length), fields = new SubArrayStruct<FieldInfoPlus>();
+                var jsonFields = new SubArrayStruct<FieldIndexPlus>();
+                fields.UnsafeSet(fixedFields.Array, fixedFields.Array.Length, 0);
+                var fixedSize = 0;
+                foreach (var field in fieldIndexPluss)
                 {
-                    Type type = field.Member.FieldType;
+                    var type = field.Member.FieldType;
                     if (!type.IsPointer && (!type.IsArray || type.GetArrayRank() == 1) && !field.IsIgnore)
                     {
-                        dataSerialize.member attribute = field.GetAttribute<dataSerialize.member>(true, true);
+                        DataSerializePlus.MemberPlus attribute = field.GetAttribute<DataSerializePlus.MemberPlus>(true, true);
                         if (attribute == null || attribute.IsSetup)
                         {
                             if (attribute != null && attribute.IsJson) jsonFields.Add(field);
                             else
                             {
-                                fieldInfo value = new fieldInfo(field);
+                                FieldInfoPlus value = new FieldInfoPlus(field);
                                 if (value.FixedSize == 0) fields.UnsafeAddExpand(value);
                                 else
                                 {
@@ -228,17 +226,18 @@ namespace TerumoMIS.CoreLibrary.Emit
                     }
                 }
                 memberCountVerify = fixedFields.Count + fields.Count + jsonFields.Count + 0x40000000;
-                return new fields<fieldInfo> { FixedFields = fixedFields.Sort(fieldInfo.FixedSizeSort), Fields = fields, JsonFields = jsonFields, FixedSize = fixedSize };
+                return new FieldsStruct<FieldInfoPlus> { FixedFields = fixedFields.Sort(FieldInfoPlus.FixedSizeSort), Fields = fields, JsonFields = jsonFields, FixedSize = fixedSize };
             }
+
             /// <summary>
             /// 获取字段成员集合
             /// </summary>
-            /// <param name="type"></param>
+            /// <param name="fieldIndexPlus"></param>
             /// <returns>字段成员集合</returns>
-            public static SubArrayStruct<memberIndex> GetMembers(fieldIndex[] fieldIndexs)
+            public static SubArrayStruct<memberIndex> GetMembers(FieldIndexPlus[] fieldIndexPlus)
             {
-                SubArrayStruct<memberIndex> fields = new SubArrayStruct<memberIndex>(fieldIndexs.Length);
-                foreach (fieldIndex field in fieldIndexs)
+                SubArrayStruct<memberIndex> fields = new SubArrayStruct<memberIndex>(fieldIndexPlus.Length);
+                foreach (FieldIndexPlus field in fieldIndexPlus)
                 {
                     Type type = field.Member.FieldType;
                     if (!type.IsPointer && (!type.IsArray || type.GetArrayRank() == 1) && !field.IsIgnore)
@@ -639,11 +638,11 @@ namespace TerumoMIS.CoreLibrary.Emit
             {
                 if (serializer.CheckPoint(value))
                 {
-                    if (serializer.serializeConfig.IsRealType) serializer.Stream.Write(BinarySerializerPlus.NullValue);
+                    if (serializer.serializeConfig.IsRealType) serializer.Stream.Write(NullValue);
                     else
                     {
                         Type type = value.GetType();
-                        if (type == typeof(TValueType)) serializer.Stream.Write(BinarySerializerPlus.NullValue);
+                        if (type == typeof(TValueType)) serializer.Stream.Write(NullValue);
                         else TypeSerializerPlus.GetRealSerializer(type)(serializer, value);
                     }
                 }
@@ -750,7 +749,7 @@ namespace TerumoMIS.CoreLibrary.Emit
             static TypeSerializerPlus()
             {
                 Type type = typeof(TValueType), attributeType;
-                MethodInfo methodInfo = DataSerializerPlus.getSerializeMethod(type);
+                MethodInfo methodInfo = getSerializeMethod(type);
                 Attribute = type.customAttribute<dataSerialize>(out attributeType, true) ?? dataSerialize.Default;
                 if (methodInfo != null)
                 {
@@ -778,7 +777,7 @@ namespace TerumoMIS.CoreLibrary.Emit
                             {
                                 if (elementType.IsEnum)
                                 {
-                                    Type enumType = System.Enum.GetUnderlyingType(elementType);
+                                    Type enumType = Enum.GetUnderlyingType(elementType);
                                     if (enumType == typeof(uint)) methodInfo = enumUIntArrayMethod;
                                     else if (enumType == typeof(byte)) methodInfo = enumByteArrayMethod;
                                     else if (enumType == typeof(ulong)) methodInfo = enumULongArrayMethod;
@@ -816,7 +815,7 @@ namespace TerumoMIS.CoreLibrary.Emit
                 }
                 if (type.IsEnum)
                 {
-                    Type enumType = System.Enum.GetUnderlyingType(type);
+                    Type enumType = Enum.GetUnderlyingType(type);
                     if (enumType == typeof(uint)) DefaultSerializer = enumUInt;
                     else if (enumType == typeof(byte)) DefaultSerializer = EnumByte;
                     else if (enumType == typeof(ulong)) DefaultSerializer = enumULong;
@@ -925,7 +924,7 @@ namespace TerumoMIS.CoreLibrary.Emit
                 {
                     if (argumentType.IsValueType && argumentType.IsEnum)
                     {
-                        Type enumType = System.Enum.GetUnderlyingType(argumentType);
+                        Type enumType = Enum.GetUnderlyingType(argumentType);
                         if (enumType == typeof(uint)) methodInfo = type.IsValueType ? structEnumUIntCollectionMethod : classEnumUIntCollectionMethod;
                         else if (enumType == typeof(byte)) methodInfo = type.IsValueType ? structEnumByteCollectionMethod : classEnumByteCollectionMethod;
                         else if (enumType == typeof(ulong)) methodInfo = type.IsValueType ? structEnumULongCollectionMethod : classEnumULongCollectionMethod;
@@ -942,7 +941,7 @@ namespace TerumoMIS.CoreLibrary.Emit
                 }
                 if (typeof(fastCSharp.code.cSharp.dataSerialize.ISerialize).IsAssignableFrom(type))
                 {
-                    methodInfo = type.IsValueType ? DataSerializerPlus.structISerializeMethod : DataSerializerPlus.classISerializeMethod;
+                    methodInfo = type.IsValueType ? structISerializeMethod : classISerializeMethod;
                     DefaultSerializer = (Action<DataSerializerPlus, TValueType>)Delegate.CreateDelegate(typeof(Action<DataSerializerPlus, TValueType>), methodInfo.MakeGenericMethod(type));
                     IsValueType = true;
                 }
@@ -966,12 +965,12 @@ namespace TerumoMIS.CoreLibrary.Emit
                             }
                         }
                     }
-                    fields<fieldInfo> fields = TypeSerializerPlus.GetFields(memberIndexGroup<TValueType>.GetFields(Attribute.MemberFilter), out MemberCountVerify);
+                    fields<FieldInfoPlus> fields = TypeSerializerPlus.GetFields(memberIndexGroup<TValueType>.GetFields(Attribute.MemberFilter), out MemberCountVerify);
                     FixedFillSize = -fields.FixedSize & 3;
                     FixedSize = (fields.FixedSize + (sizeof(int) + 3)) & (int.MaxValue - 3);
                     TypeSerializerPlus.MemberDynamicMethodStruct fixedDynamicMethod = new TypeSerializerPlus.MemberDynamicMethodStruct(type);
                     TypeSerializerPlus.MemberMapDynamicMethodStruct fixedMemberMapDynamicMethod = Attribute.IsMemberMap ? new TypeSerializerPlus.MemberMapDynamicMethodStruct(type) : default(TypeSerializerPlus.MemberMapDynamicMethodStruct);
-                    foreach (fieldInfo member in fields.FixedFields)
+                    foreach (FieldInfoPlus member in fields.FixedFields)
                     {
                         fixedDynamicMethod.Push(member);
                         if (Attribute.IsMemberMap) fixedMemberMapDynamicMethod.Push(member);
@@ -981,7 +980,7 @@ namespace TerumoMIS.CoreLibrary.Emit
 
                     TypeSerializerPlus.MemberDynamicMethodStruct dynamicMethod = new TypeSerializerPlus.MemberDynamicMethodStruct(type);
                     TypeSerializerPlus.MemberMapDynamicMethodStruct memberMapDynamicMethod = Attribute.IsMemberMap ? new TypeSerializerPlus.MemberMapDynamicMethodStruct(type) : default(TypeSerializerPlus.MemberMapDynamicMethodStruct);
-                    foreach (fieldInfo member in fields.Fields)
+                    foreach (FieldInfoPlus member in fields.Fields)
                     {
                         dynamicMethod.Push(member);
                         if (Attribute.IsMemberMap) memberMapDynamicMethod.Push(member);
@@ -994,7 +993,7 @@ namespace TerumoMIS.CoreLibrary.Emit
                         JsonMemberMap = memberMap<TValueType>.New();
                         JsonMemberIndexs = new int[fields.JsonFields.Count];
                         int index = 0;
-                        foreach (fieldIndex field in fields.JsonFields) JsonMemberMap.SetMember(JsonMemberIndexs[index++] = field.MemberIndex);
+                        foreach (FieldIndexPlus field in fields.JsonFields) JsonMemberMap.SetMember(JsonMemberIndexs[index++] = field.MemberIndex);
                     }
                 }
             }
@@ -2933,7 +2932,7 @@ namespace TerumoMIS.CoreLibrary.Emit
         public static void Serialize<valueType>(valueType value, unmanagedStream stream, ConfigPlus config = null)
         {
             if (stream == null) log.Default.Throw(log.exceptionType.Null);
-            if (value == null) stream.Write(BinarySerializerPlus.NullValue);
+            if (value == null) stream.Write(NullValue);
             else
             {
                 DataSerializerPlus serializer = typePool<DataSerializerPlus>.Pop() ?? new DataSerializerPlus();
@@ -2954,7 +2953,7 @@ namespace TerumoMIS.CoreLibrary.Emit
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte[] Serialize<valueType>(valueType value, ConfigPlus config = null)
         {
-            if (value == null) return BitConverter.GetBytes(BinarySerializerPlus.NullValue);
+            if (value == null) return BitConverter.GetBytes(NullValue);
             DataSerializerPlus serializer = typePool<DataSerializerPlus>.Pop() ?? new DataSerializerPlus();
             try
             {
@@ -2973,7 +2972,7 @@ namespace TerumoMIS.CoreLibrary.Emit
         public static void CodeSerialize<valueType>(valueType value, unmanagedStream stream, ConfigPlus config = null) where valueType : fastCSharp.code.cSharp.dataSerialize.ISerialize
         {
             if (stream == null) log.Default.Throw(log.exceptionType.Null);
-            if (value == null) stream.Write(BinarySerializerPlus.NullValue);
+            if (value == null) stream.Write(NullValue);
             else
             {
                 DataSerializerPlus serializer = typePool<DataSerializerPlus>.Pop() ?? new DataSerializerPlus();
@@ -2994,7 +2993,7 @@ namespace TerumoMIS.CoreLibrary.Emit
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte[] CodeSerialize<valueType>(valueType value, ConfigPlus config = null) where valueType : fastCSharp.code.cSharp.dataSerialize.ISerialize
         {
-            if (value == null) return BitConverter.GetBytes(BinarySerializerPlus.NullValue);
+            if (value == null) return BitConverter.GetBytes(NullValue);
             DataSerializerPlus serializer = typePool<DataSerializerPlus>.Pop() ?? new DataSerializerPlus();
             try
             {
@@ -3026,7 +3025,7 @@ namespace TerumoMIS.CoreLibrary.Emit
         /// <returns>序列化数据</returns>
         public static byte[] ObjectSerialize(object value, ConfigPlus config = null)
         {
-            if (value == null) return BitConverter.GetBytes(BinarySerializerPlus.NullValue);
+            if (value == null) return BitConverter.GetBytes(NullValue);
             Type type = value.GetType();
             Func<object, ConfigPlus, byte[]> serializer;
             if (!objectSerializes.TryGetValue(type, out serializer))
@@ -3047,7 +3046,7 @@ namespace TerumoMIS.CoreLibrary.Emit
         /// <summary>
         /// 序列化数据流字段信息
         /// </summary>
-        private static readonly FieldInfo serializeStreamField = typeof(DataSerializerPlus).GetField("Stream", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfoPlus serializeStreamField = typeof(DataSerializerPlus).GetField("Stream", BindingFlags.Instance | BindingFlags.NonPublic);
         /// <summary>
         /// 基本类型转换函数
         /// </summary>

@@ -17,26 +17,22 @@
 //  CLRVersion : 4.0.30319.18408
 //==============================================================
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
 
 namespace TerumoMIS.CoreLibrary.Code
 {
     /// <summary>
-    /// 字段索引
+    ///     字段索引
     /// </summary>
-    internal sealed class FieldIndexPlus:MemberIndexPlus<FieldInfoPlus>
+    internal sealed class FieldIndexPlus : MemberIndexPlus<FieldInfo>
     {
         /// <summary>
-        /// 字段信息
+        ///     字段信息
         /// </summary>
         /// <param name="field">字段信息</param>
         /// <param name="filter">选择类型</param>
         /// <param name="index">成员编号</param>
-        public fieldIndex(FieldInfo field, memberFilters filter, int index)
+        public FieldIndexPlus(FieldInfo field, MemberFiltersEnum filter, int index)
             : base(field, filter, index)
         {
             IsField = CanGet = true;

@@ -19,117 +19,120 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TerumoMIS.CoreLibrary
 {
     /// <summary>
-    /// 唯一静态哈希字典
+    ///     唯一静态哈希字典
     /// </summary>
     /// <typeparam name="TKeyType">键值类型</typeparam>
     /// <typeparam name="TValueType">数据类型</typeparam>
-    public sealed class UniqueDictionaryPlus<TKeyType,TValueType>
-        where TKeyType:struct ,IEquatable<TKeyType>
+    public sealed class UniqueDictionaryPlus<TKeyType, TValueType>
+        where TKeyType : struct, IEquatable<TKeyType>
     {
         /// <summary>
-        /// 哈希数据数组
+        ///     哈希数据数组
         /// </summary>
-        private keyValue<TKeyType, TValueType>[] array;
+        private readonly KeyValueStruct<TKeyType, TValueType>[] _array;
+
         /// <summary>
-        /// 唯一静态哈希字典
+        ///     唯一静态哈希字典
         /// </summary>
         /// <param name="keys">键值数据集合</param>
         /// <param name="getValue">数据获取器</param>
         /// <param name="size">哈希容器尺寸</param>
-        public unsafe uniqueDictionary(TKeyType[] keys, Func<TKeyType, TValueType> getValue, int size)
+        public unsafe UniqueDictionaryPlus(IReadOnlyCollection<TKeyType> keys, Func<TKeyType, TValueType> getValue,
+            int size)
         {
-            int count = keys.length();
-            if (count > size || size <= 0) log.Error.Throw(log.exceptionType.IndexOutOfRange);
-            if (getValue == null) log.Error.Throw(log.exceptionType.Null);
-            array = new keyValue<TKeyType, TValueType>[size];
+            var count = keys.Count;
+            if (count > size || size <= 0) LogPlus.Error.Throw(LogPlus.ExceptionTypeEnum.IndexOutOfRange);
+            if (getValue == null) LogPlus.Error.Throw(LogPlus.ExceptionTypeEnum.Null);
+            _array = new KeyValueStruct<TKeyType, TValueType>[size];
             if (count != 0)
             {
-                int length = ((size + 31) >> 5) << 2;
+                var length = ((size + 31) >> 5) << 2;
                 byte* isValue = stackalloc byte[length];
-                fixedMap map = new fixedMap(isValue, length, 0);
-                foreach (TKeyType key in keys)
+                var map = new FixedMapStruct(isValue, length);
+                foreach (var key in keys)
                 {
-                    int index = key.GetHashCode();
-                    if ((uint)index >= size) log.Error.Throw(log.exceptionType.IndexOutOfRange);
-                    if (map.Get(index)) log.Error.Throw(log.exceptionType.ErrorOperation);
+                    var index = key.GetHashCode();
+                    if ((uint) index >= size) LogPlus.Error.Throw(LogPlus.ExceptionTypeEnum.IndexOutOfRange);
+                    if (map.Get(index)) LogPlus.Error.Throw(LogPlus.ExceptionTypeEnum.ErrorOperation);
                     map.Set(index);
-                    array[index] = new keyValue<TKeyType, TValueType>(key, getValue(key));
+                    if (getValue != null) _array[index] = new KeyValueStruct<TKeyType, TValueType>(key, getValue(key));
                 }
             }
         }
+
         /// <summary>
-        /// 唯一静态哈希字典
+        ///     唯一静态哈希字典
         /// </summary>
         /// <param name="values">数据集合</param>
         /// <param name="size">哈希容器尺寸</param>
-        public uniqueDictionary(list<keyValue<TKeyType, TValueType>> values, int size)
+        public UniqueDictionaryPlus(ListPlus<KeyValueStruct<TKeyType, TValueType>> values, int size)
         {
-            int count = values.count();
-            if (count > size || size <= 0) log.Error.Throw(log.exceptionType.IndexOutOfRange);
-            array = new keyValue<TKeyType, TValueType>[size];
-            if (count != 0) fromArray(values.array, count, size);
+            var count = values.count();
+            if (count > size || size <= 0) LogPlus.Error.Throw(LogPlus.ExceptionTypeEnum.IndexOutOfRange);
+            _array = new KeyValueStruct<TKeyType, TValueType>[size];
+            if (count != 0) FromArray(values.Array, count, size);
         }
+
         /// <summary>
-        /// 唯一静态哈希字典
+        ///     唯一静态哈希字典
         /// </summary>
         /// <param name="values">数据集合</param>
         /// <param name="size">哈希容器尺寸</param>
-        public uniqueDictionary(keyValue<TKeyType, TValueType>[] values, int size)
+        public UniqueDictionaryPlus(KeyValueStruct<TKeyType, TValueType>[] values, int size)
         {
-            int count = values.length();
-            if (count > size || size <= 0) log.Error.Throw(log.exceptionType.IndexOutOfRange);
-            array = new keyValue<TKeyType, TValueType>[size];
-            if (count != 0) fromArray(values, count, size);
+            var count = values.Length;
+            if (count > size || size <= 0) LogPlus.Error.Throw(LogPlus.ExceptionTypeEnum.IndexOutOfRange);
+            _array = new KeyValueStruct<TKeyType, TValueType>[size];
+            if (count != 0) FromArray(values, count, size);
         }
+
         /// <summary>
-        /// 唯一静态哈希字典
+        ///     唯一静态哈希字典
         /// </summary>
         /// <param name="values">数据集合</param>
         /// <param name="count">数据数量</param>
         /// <param name="size">哈希容器尺寸</param>
-        private unsafe void fromArray(keyValue<TKeyType, TValueType>[] values, int count, int size)
+        private unsafe void FromArray(IReadOnlyList<KeyValueStruct<TKeyType, TValueType>> values, int count, int size)
         {
-            int length = ((size + 31) >> 5) << 2;
+            var length = ((size + 31) >> 5) << 2;
             byte* isValue = stackalloc byte[length];
-            fixedMap map = new fixedMap(isValue, length, 0);
+            var map = new FixedMapStruct(isValue, length);
             do
             {
-                keyValue<TKeyType, TValueType> value = values[--count];
-                int index = value.Key.GetHashCode();
-                if ((uint)index >= size) log.Error.Throw(log.exceptionType.IndexOutOfRange);
-                if (map.Get(index)) log.Error.Throw(log.exceptionType.ErrorOperation);
+                var value = values[--count];
+                var index = value.Key.GetHashCode();
+                if ((uint) index >= size) LogPlus.Error.Throw(LogPlus.ExceptionTypeEnum.IndexOutOfRange);
+                if (map.Get(index)) LogPlus.Error.Throw(LogPlus.ExceptionTypeEnum.ErrorOperation);
                 map.Set(index);
-                array[index] = value;
-            }
-            while (count != 0);
+                _array[index] = value;
+            } while (count != 0);
         }
+
         /// <summary>
-        /// 判断是否存在某键值
+        ///     判断是否存在某键值
         /// </summary>
         /// <param name="key">待匹配键值</param>
         /// <returns>是否存在某键值</returns>
         public bool ContainsKey(TKeyType key)
         {
-            int index = key.GetHashCode();
-            return (uint)index < array.Length && key.Equals(array[index].Key);
+            var index = key.GetHashCode();
+            return (uint) index < _array.Length && key.Equals(_array[index].Key);
         }
+
         /// <summary>
-        /// 获取匹配数据
+        ///     获取匹配数据
         /// </summary>
         /// <param name="key">哈希键值</param>
         /// <param name="nullValue">默认空值</param>
         /// <returns>匹配数据,失败返回默认空值</returns>
         public TValueType Get(TKeyType key, TValueType nullValue)
         {
-            int index = key.GetHashCode();
-            return (uint)index < array.Length && key.Equals(array[index].Key) ? array[index].Value : nullValue;
+            var index = key.GetHashCode();
+            return (uint) index < _array.Length && key.Equals(_array[index].Key) ? _array[index].Value : nullValue;
         }
     }
 }

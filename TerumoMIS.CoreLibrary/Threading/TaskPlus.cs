@@ -18,208 +18,232 @@
 //==============================================================
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
+using System.Threading;
+using TerumoMIS.CoreLibrary.Config;
 
 namespace TerumoMIS.CoreLibrary.Threading
 {
     /// <summary>
-    /// 任务处理基类
+    ///     任务处理基类
     /// </summary>
-    public abstract class taskBase : IDisposable
+    public abstract class TaskBasePlus : IDisposable
     {
         /// <summary>
-        /// 线程池
+        ///     等待空闲事件
         /// </summary>
-        protected threadPool threadPool;
+        protected readonly EventWaitHandle FreeWaitHandle = new EventWaitHandle(true, EventResetMode.ManualReset, null);
+
         /// <summary>
-        /// 新任务集合
+        ///     默认释放资源是否等待线程结束
         /// </summary>
-        internal list<taskInfo> PushTasks = new list<taskInfo>();
+        protected bool IsDisposeWait;
+
         /// <summary>
-        /// 等待空闲事件
+        ///     是否停止任务
         /// </summary>
-        protected readonly EventWaitHandle freeWaitHandle = new EventWaitHandle(true, EventResetMode.ManualReset, null);
+        protected byte IsStop;
+
         /// <summary>
-        /// 任务访问锁
+        ///     新任务集合
         /// </summary>
-        protected int taskLock;
+        internal ListPlus<TaskInfoStruct> PushTasks = new ListPlus<TaskInfoStruct>();
+
         /// <summary>
-        /// 线程数量
+        ///     任务访问锁
         /// </summary>
-        protected int threadCount;
+        protected int TaskLock;
+
         /// <summary>
-        /// 默认释放资源是否等待线程结束
+        ///     线程数量
         /// </summary>
-        protected bool isDisposeWait;
+        protected int ThreadCount;
+
         /// <summary>
-        /// 是否停止任务
+        ///     线程池
         /// </summary>
-        protected byte isStop;
+        protected ThreadPoolPlus ThreadPool;
+
         /// <summary>
-        /// 释放资源
+        ///     释放资源
         /// </summary>
         public void Dispose()
         {
-            fastCSharp.domainUnload.Remove(Dispose, false);
-            Dispose(isDisposeWait);
+            DomainUnloadPlus.Remove(Dispose, false);
+            Dispose(IsDisposeWait);
         }
+
         /// <summary>
-        /// 释放资源
+        ///     释放资源
         /// </summary>
         /// <param name="isWait">是否等待线程结束</param>
         public void Dispose(bool isWait)
         {
-            interlocked.NoCheckCompareSetSleep0(ref taskLock);
-            int threadCount = this.threadCount | PushTasks.Count;
-            isStop = 1;
-            taskLock = 0;
+            InterlockedPlus.NoCheckCompareSetSleep0(ref TaskLock);
+            var threadCount = ThreadCount | PushTasks.Count;
+            IsStop = 1;
+            TaskLock = 0;
             if (isWait && threadCount != 0)
             {
-                freeWaitHandle.WaitOne();
-                freeWaitHandle.Close();
+                FreeWaitHandle.WaitOne();
+                FreeWaitHandle.Close();
             }
         }
+
         /// <summary>
-        /// 单线程添加任务后，等待所有线程空闲
+        ///     单线程添加任务后，等待所有线程空闲
         /// </summary>
         public void WaitFree()
         {
-            interlocked.NoCheckCompareSetSleep0(ref taskLock);
-            int threadCount = this.threadCount | PushTasks.Count;
-            taskLock = 0;
-            if (threadCount != 0) freeWaitHandle.WaitOne();
+            InterlockedPlus.NoCheckCompareSetSleep0(ref TaskLock);
+            var threadCount = ThreadCount | PushTasks.Count;
+            TaskLock = 0;
+            if (threadCount != 0) FreeWaitHandle.WaitOne();
         }
     }
+
     /// <summary>
-    /// 任务处理类(适用于短小任务，因为处理阻塞)
+    ///     任务处理类(适用于短小任务，因为处理阻塞)
     /// </summary>
-    public sealed class task : taskBase
+    public sealed class TaskPlus : TaskBasePlus
     {
         /// <summary>
-        /// 最大线程数量
+        ///     微型线程任务
         /// </summary>
-        public int MaxThreadCount { get; private set; }
+        public static readonly TaskPlus Tiny = new TaskPlus(Config.PubPlus.Default.TinyThreadCount);
+
         /// <summary>
-        /// 执行任务
+        ///     默认任务
         /// </summary>
-        private Action<taskInfo> runHandle;
+        public static readonly TaskPlus Default = new TaskPlus(Config.PubPlus.Default.TaskThreadCount, true,
+            ThreadPoolPlus.Default);
+
         /// <summary>
-        /// 任务处理
+        ///     执行任务
+        /// </summary>
+        private readonly Action<TaskInfoStruct> _runHandle;
+
+        static TaskPlus()
+        {
+            if (AppSettingPlus.IsCheckMemory) CheckMemoryPlus.Add(MethodBase.GetCurrentMethod().DeclaringType);
+        }
+
+        /// <summary>
+        ///     任务处理
         /// </summary>
         /// <param name="count">线程数</param>
         /// <param name="isDisposeWait">默认释放资源是否等待线程结束</param>
         /// <param name="threadPool">线程池</param>
-        public task(int count, bool isDisposeWait = true, threadPool threadPool = null)
+        public TaskPlus(int count, bool isDisposeWait = true, ThreadPoolPlus threadPool = null)
         {
-            if (count <= 0 || count > config.pub.Default.TaskMaxThreadCount) fastCSharp.log.Error.Throw(log.exceptionType.IndexOutOfRange);
+            if (count <= 0 || count > Config.PubPlus.Default.TaskMaxThreadCount)
+                LogPlus.Error.Throw(LogPlus.ExceptionTypeEnum.IndexOutOfRange);
             MaxThreadCount = count;
-            runHandle = run;
-            this.isDisposeWait = isDisposeWait;
-            this.threadPool = threadPool ?? fastCSharp.threading.threadPool.TinyPool;
-            fastCSharp.domainUnload.Add(Dispose, false);
+            _runHandle = Run;
+            IsDisposeWait = isDisposeWait;
+            ThreadPool = threadPool ?? ThreadPoolPlus.TinyPool;
+            DomainUnloadPlus.Add(Dispose, false);
         }
+
         /// <summary>
-        /// 添加任务
+        ///     最大线程数量
+        /// </summary>
+        public int MaxThreadCount { get; private set; }
+
+        /// <summary>
+        ///     添加任务
         /// </summary>
         /// <param name="task">任务信息</param>
         /// <returns>任务添加是否成功</returns>
-        internal bool Add(taskInfo task)
+        internal bool Add(TaskInfoStruct task)
         {
-            interlocked.NoCheckCompareSetSleep0(ref taskLock);
-            if (isStop == 0)
+            InterlockedPlus.NoCheckCompareSetSleep0(ref TaskLock);
+            if (IsStop == 0)
             {
-                if (threadCount == MaxThreadCount)
+                if (ThreadCount == MaxThreadCount)
                 {
                     try
                     {
                         PushTasks.Add(task);
                     }
-                    finally { taskLock = 0; }
+                    finally
+                    {
+                        TaskLock = 0;
+                    }
                     return true;
                 }
-                if (threadCount == 0) freeWaitHandle.Reset();
-                ++threadCount;
-                taskLock = 0;
+                if (ThreadCount == 0) FreeWaitHandle.Reset();
+                ++ThreadCount;
+                TaskLock = 0;
                 try
                 {
-                    threadPool.FastStart(runHandle, task, null, null);
+                    ThreadPool.FastStart(_runHandle, task, null, null);
                     return true;
                 }
                 catch (Exception error)
                 {
-                    interlocked.NoCheckCompareSetSleep0(ref taskLock);
-                    int count = --this.threadCount | PushTasks.Count;
-                    taskLock = 0;
-                    if (count == 0) freeWaitHandle.Set();
-                    log.Error.Add(error, null, false);
+                    InterlockedPlus.NoCheckCompareSetSleep0(ref TaskLock);
+                    var count = --ThreadCount | PushTasks.Count;
+                    TaskLock = 0;
+                    if (count == 0) FreeWaitHandle.Set();
+                    LogPlus.Error.Add(error, null, false);
                 }
             }
-            else taskLock = 0;
+            else TaskLock = 0;
             return false;
         }
+
         /// <summary>
-        /// 添加任务
+        ///     添加任务
         /// </summary>
         /// <param name="run">任务执行委托</param>
         /// <param name="onError">任务执行出错委托,停止任务参数null</param>
         /// <returns>任务添加是否成功</returns>
         public bool Add(Action run, Action<Exception> onError = null)
         {
-            return run != null && Add(new taskInfo { Call = run, OnError = onError });
+            return run != null && Add(new TaskInfoStruct {Call = run, OnError = onError});
         }
+
         /// <summary>
-        /// 添加任务
+        ///     添加任务
         /// </summary>
-        /// <typeparam name="parameterType">执行参数类型</typeparam>
+        /// <typeparam name="TParameterType">执行参数类型</typeparam>
         /// <param name="run">任务执行委托</param>
         /// <param name="parameter">执行参数</param>
         /// <param name="onError">任务执行出错委托,停止任务参数null</param>
         /// <returns>任务添加是否成功</returns>
-        public bool Add<parameterType>(Action<parameterType> run, parameterType parameter, Action<Exception> onError = null)
+        public bool Add<TParameterType>(Action<TParameterType> run, TParameterType parameter,
+            Action<Exception> onError = null)
         {
-            return run != null && Add(new taskInfo { Call = run<parameterType>.Create(run, parameter), OnError = onError });
+            return run != null &&
+                   Add(new TaskInfoStruct {Call = RunPlus<TParameterType>.Create(run, parameter), OnError = onError});
         }
+
         /// <summary>
-        /// 执行任务
+        ///     执行任务
         /// </summary>
         /// <param name="task">任务信息</param>
-        private void run(taskInfo task)
+        private void Run(TaskInfoStruct task)
         {
             task.Run();
             do
             {
-                interlocked.NoCheckCompareSetSleep0(ref taskLock);
+                InterlockedPlus.NoCheckCompareSetSleep0(ref TaskLock);
                 if (PushTasks.Count == 0)
                 {
-                    int threadCount = --this.threadCount;
-                    taskLock = 0;
+                    var threadCount = --ThreadCount;
+                    TaskLock = 0;
                     if (threadCount == 0)
                     {
-                        freeWaitHandle.Set();
-                        if (isStop != 0) freeWaitHandle.Close();
+                        FreeWaitHandle.Set();
+                        if (IsStop != 0) FreeWaitHandle.Close();
                     }
                     break;
                 }
                 task = PushTasks.Unsafer.PopReset();
-                taskLock = 0;
+                TaskLock = 0;
                 task.Run();
-            }
-            while (true);
-        }
-        /// <summary>
-        /// 微型线程任务
-        /// </summary>
-        public static readonly task Tiny = new task(config.pub.Default.TinyThreadCount);
-        /// <summary>
-        /// 默认任务
-        /// </summary>
-        public static readonly task Default = new task(config.pub.Default.TaskThreadCount, true, threadPool.Default);
-        static task()
-        {
-            if (fastCSharp.config.appSetting.IsCheckMemory) checkMemory.Add(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+            } while (true);
         }
     }
 }

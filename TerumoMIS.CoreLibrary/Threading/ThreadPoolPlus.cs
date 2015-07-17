@@ -18,178 +18,205 @@
 //==============================================================
 
 using System;
-using System.Diagnostics;
 using System.Reflection;
+using TerumoMIS.CoreLibrary.Config;
 
 namespace TerumoMIS.CoreLibrary.Threading
 {
     /// <summary>
-    /// 线程池
+    ///     线程池
     /// </summary>
     public sealed class ThreadPoolPlus
     {
         /// <summary>
-        /// 最低线程堆栈大小
+        ///     最低线程堆栈大小
         /// </summary>
-        private const int minStackSize = 128 << 10;
+        private const int MinStackSize = 128 << 10;
+
         /// <summary>
-        /// 线程堆栈大小
+        ///     微型线程池,堆栈大小可能只有128K
         /// </summary>
-        private int stackSize;
+        public static readonly ThreadPoolPlus TinyPool = new ThreadPoolPlus(AppSettingPlus.TinyThreadStackSize);
+
         /// <summary>
-        /// 线程集合
+        ///     默认线程池
         /// </summary>
-        private objectPool<thread> threads = objectPool<thread>.Create();
+        public static readonly ThreadPoolPlus Default = AppSettingPlus.ThreadStackSize !=
+                                                        AppSettingPlus.TinyThreadStackSize
+            ? new ThreadPoolPlus(AppSettingPlus.ThreadStackSize)
+            : TinyPool;
+
         /// <summary>
-        /// 是否已经释放资源
+        ///     线程堆栈大小
         /// </summary>
-        private bool isDisposed;
+        private readonly int _stackSize;
+
         /// <summary>
-        /// 线程池
+        ///     是否已经释放资源
+        /// </summary>
+        private bool _isDisposed;
+
+        /// <summary>
+        ///     线程集合
+        /// </summary>
+        private ObjectPoolStruct<ThreadPlus> _threads = ObjectPoolStruct<ThreadPlus>.Create();
+
+        static ThreadPoolPlus()
+        {
+            if (AppSettingPlus.IsCheckMemory) CheckMemoryPlus.Add(MethodBase.GetCurrentMethod().DeclaringType);
+        }
+
+        /// <summary>
+        ///     线程池
         /// </summary>
         /// <param name="stackSize">线程堆栈大小</param>
-        private threadPool(int stackSize = 1 << 20)
+        private ThreadPoolPlus(int stackSize = 1 << 20)
         {
-            this.stackSize = stackSize < minStackSize ? minStackSize : stackSize;
-            fastCSharp.domainUnload.Add(dispose);
+            _stackSize = stackSize < MinStackSize ? MinStackSize : stackSize;
+            DomainUnloadPlus.Add(Dispose);
         }
+
         /// <summary>
-        /// 释放资源
+        ///     释放资源
         /// </summary>
-        private void dispose()
+        private void Dispose()
         {
-            isDisposed = true;
-            disposePool();
+            _isDisposed = true;
+            DisposePool();
         }
+
         /// <summary>
-        /// 释放线程池
+        ///     释放线程池
         /// </summary>
-        private void disposePool()
+        private void DisposePool()
         {
-            foreach (array.value<thread> value in threads.GetClear(0)) value.Value.Stop();
+            foreach (var value in _threads.GetClear(0)) value.Value.Stop();
         }
+
         /// <summary>
-        /// 获取一个线程并执行任务
+        ///     获取一个线程并执行任务
         /// </summary>
         /// <param name="task">任务委托</param>
         /// <param name="domainUnload">应用程序退出处理</param>
         /// <param name="onError">应用程序退出处理</param>
-        private void start(Action task, Action domainUnload, Action<Exception> onError)
+        private void StartBase(Action task, Action domainUnload, Action<Exception> onError)
         {
-            if (task == null) log.Error.Throw(null, "缺少 线程委托", false);
-            if (isDisposed) log.Default.Real("线程池已经被释放", true, false);
+            if (task == null) LogPlus.Error.Throw(null, "缺少 线程委托", false);
+            if (_isDisposed) LogPlus.Default.Real("线程池已经被释放", true);
             else
             {
-                thread thread = threads.Pop();
-                if (thread == null) new thread(this, stackSize, task, domainUnload, onError);
+                var thread = _threads.Pop();
+                // ReSharper disable once ObjectCreationAsStatement
+                if (thread == null) new ThreadPlus(this, _stackSize, task, domainUnload, onError);
                 else thread.RunTask(task, domainUnload, onError);
             }
         }
+
         /// <summary>
-        /// 获取一个线程并执行任务
+        ///     获取一个线程并执行任务
         /// </summary>
         /// <param name="task">任务委托</param>
         /// <param name="domainUnload">应用程序退出处理</param>
         /// <param name="onError">应用程序退出处理</param>
         internal void FastStart(Action task, Action domainUnload, Action<Exception> onError)
         {
-            thread thread = threads.Pop();
-            if (thread == null) new thread(this, stackSize, task, domainUnload, onError);
+            var thread = _threads.Pop();
+            // ReSharper disable once ObjectCreationAsStatement
+            if (thread == null) new ThreadPlus(this, _stackSize, task, domainUnload, onError);
             else thread.RunTask(task, domainUnload, onError);
         }
+
         /// <summary>
-        /// 获取一个线程并执行任务
+        ///     获取一个线程并执行任务
         /// </summary>
-        /// <typeparam name="parameterType">参数类型</typeparam>
+        /// <typeparam name="TParameterType">参数类型</typeparam>
         /// <param name="task">任务委托</param>
         /// <param name="parameter">线程参数</param>
         /// <param name="domainUnload">应用程序退出处理</param>
         /// <param name="onError">应用程序退出处理</param>
-        internal void FastStart<parameterType>(Action<parameterType> task, parameterType parameter, Action domainUnload, Action<Exception> onError)
+        internal void FastStart<TParameterType>(Action<TParameterType> task, TParameterType parameter,
+            Action domainUnload, Action<Exception> onError)
         {
-            FastStart(run<parameterType>.Create(task, parameter), domainUnload, onError);
+            FastStart(RunPlus<TParameterType>.Create(task, parameter), domainUnload, onError);
         }
+
         /// <summary>
-        /// 获取一个线程并执行任务
+        ///     获取一个线程并执行任务
         /// </summary>
         /// <param name="task">任务委托</param>
         /// <param name="domainUnload">应用程序退出处理</param>
         /// <param name="onError">应用程序退出处理</param>
         public void Start(Action task, Action domainUnload = null, Action<Exception> onError = null)
         {
-            if (task == null) log.Error.Throw(null, "缺少 线程委托", false);
-            start(task, domainUnload, onError);
+            if (task == null) LogPlus.Error.Throw(null, "缺少 线程委托", false);
+            StartBase(task, domainUnload, onError);
         }
+
         /// <summary>
-        /// 获取一个线程并执行任务
+        ///     获取一个线程并执行任务
         /// </summary>
-        /// <typeparam name="parameterType">参数类型</typeparam>
+        /// <typeparam name="TParameterType">参数类型</typeparam>
         /// <param name="task">任务委托</param>
         /// <param name="parameter">线程参数</param>
         /// <param name="domainUnload">应用程序退出处理</param>
         /// <param name="onError">应用程序退出处理</param>
-        public void Start<parameterType>
-            (Action<parameterType> task, parameterType parameter, Action domainUnload = null, Action<Exception> onError = null)
+        public void Start<TParameterType>
+            (Action<TParameterType> task, TParameterType parameter, Action domainUnload = null,
+                Action<Exception> onError = null)
         {
-            if (task == null) log.Error.Throw(null, "缺少 线程委托", false);
-            start(run<parameterType>.Create(task, parameter), domainUnload, onError);
+            if (task == null) LogPlus.Error.Throw(null, "缺少线程委托", false);
+            StartBase(RunPlus<TParameterType>.Create(task, parameter), domainUnload, onError);
         }
+
         /// <summary>
-        /// 获取一个线程并执行任务
+        ///     获取一个线程并执行任务
         /// </summary>
-        /// <typeparam name="parameterType">参数类型</typeparam>
-        /// <typeparam name="returnType">返回值类型</typeparam>
+        /// <typeparam name="TParameterType">参数类型</typeparam>
+        /// <typeparam name="TReturnType">返回值类型</typeparam>
         /// <param name="task">任务委托</param>
         /// <param name="parameter">线程参数</param>
         /// <param name="onReturn">返回值执行委托</param>
         /// <param name="domainUnload">应用程序退出处理</param>
         /// <param name="onError">应用程序退出处理</param>
-        public void Start<parameterType, returnType>(Func<parameterType, returnType> task, parameterType parameter,
-            Action<returnType> onReturn, Action domainUnload = null, Action<Exception> onError = null)
+        public void Start<TParameterType, TReturnType>(Func<TParameterType, TReturnType> task, TParameterType parameter,
+            Action<TReturnType> onReturn, Action domainUnload = null, Action<Exception> onError = null)
         {
-            if (task == null) log.Error.Throw(null, "缺少 线程委托", false);
-            start(run<parameterType, returnType>.Create(task, parameter, onReturn), domainUnload, onError);
+            if (task == null) LogPlus.Error.Throw(null, "缺少线程委托", false);
+            StartBase(run<TParameterType, TReturnType>.Create(task, parameter, onReturn), domainUnload, onError);
         }
+
         /// <summary>
-        /// 线程入池
+        ///     线程入池
         /// </summary>
         /// <param name="thread">线程池线程</param>
-        internal void Push(thread thread)
+        internal void Push(ThreadPlus thread)
         {
-            if (isDisposed) thread.Stop();
+            if (_isDisposed) thread.Stop();
             else
             {
-                threads.Push(thread);
-                if (isDisposed) disposePool();
+                _threads.Push(thread);
+                if (_isDisposed) DisposePool();
             }
         }
+
         /// <summary>
-        /// 检测日志输出
+        ///     检测日志输出
         /// </summary>
-        public static void CheckLog()
+        public static void CheckLogPlus()
         {
-            subArray<StackTrace> threads = thread.StackTraces;
-            log.Default.Add("活动线程数量 " + threads.Count.toString(), false, false);
-            foreach (StackTrace value in threads)
+            var threads = ThreadPlus.StackTraces;
+            LogPlus.Default.Add("活动线程数量 " + threads.Count);
+            foreach (var value in threads)
             {
                 try
                 {
-                    log.Default.Add(value.ToString(), false, false);
+                    LogPlus.Default.Add(value.ToString());
                 }
-                catch { }
+                catch
+                {
+                    // ignored
+                }
             }
-        }
-        /// <summary>
-        /// 微型线程池,堆栈大小可能只有128K
-        /// </summary>
-        public static readonly threadPool TinyPool = new threadPool(fastCSharp.config.appSetting.TinyThreadStackSize);
-        /// <summary>
-        /// 默认线程池
-        /// </summary>
-        public static readonly threadPool Default = fastCSharp.config.appSetting.ThreadStackSize != fastCSharp.config.appSetting.TinyThreadStackSize ? new threadPool(fastCSharp.config.appSetting.ThreadStackSize) : TinyPool;
-        static ThreadPoolPlus()
-        {
-            if (fastCSharp.config.appSetting.IsCheckMemory) checkMemory.Add(MethodBase.GetCurrentMethod().DeclaringType);
         }
     }
 }

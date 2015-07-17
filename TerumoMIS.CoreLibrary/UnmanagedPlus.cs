@@ -20,32 +20,48 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
+using TerumoMIS.CoreLibrary.Unsafe;
 
 namespace TerumoMIS.CoreLibrary
 {
     /// <summary>
-    /// 非托管内存
+    ///     非托管内存
     /// </summary>
-    public unsafe static class UnmanagedPlus
+    public static unsafe class UnmanagedPlus
     {
         /// <summary>
-        /// 指针
+        ///     指针
         /// </summary>
         private static byte* _data;
+
         /// <summary>
-        /// 指针
+        ///     字节长度
+        /// </summary>
+        private static int _size;
+
+        /// <summary>
+        ///     未释放非托管内存句柄数量
+        /// </summary>
+        private static int _usedCount;
+
+        /// <summary>
+        ///     指针
         /// </summary>
         public static byte* Data
         {
             get { return _data; }
         }
-        /// <summary>
-        /// 字节长度
-        /// </summary>
-        private static int _size;
 
         /// <summary>
-        /// 释放内存
+        ///     未释放非托管内存句柄数量
+        /// </summary>
+        public static int UsedCount
+        {
+            get { return _usedCount; }
+        }
+
+        /// <summary>
+        ///     释放内存
         /// </summary>
         public static void Free()
         {
@@ -53,19 +69,9 @@ namespace TerumoMIS.CoreLibrary
             _data = null;
             _size = 0;
         }
+
         /// <summary>
-        /// 未释放非托管内存句柄数量
-        /// </summary>
-        private static int _usedCount;
-        /// <summary>
-        /// 未释放非托管内存句柄数量
-        /// </summary>
-        public static int UsedCount
-        {
-            get { return _usedCount; }
-        }
-        /// <summary>
-        /// 申请非托管内存
+        ///     申请非托管内存
         /// </summary>
         /// <param name="size">内存字节数</param>
         /// <param name="isClear">是否需要清除</param>
@@ -75,15 +81,16 @@ namespace TerumoMIS.CoreLibrary
             if (size < 0) LogPlus.Error.Throw(LogPlus.ExceptionTypeEnum.IndexOutOfRange);
             if (size != 0)
             {
-                byte* data = (byte*)Marshal.AllocHGlobal(size);
+                var data = (byte*) Marshal.AllocHGlobal(size);
                 Interlocked.Increment(ref _usedCount);
-                if (isClear) fastCSharp.unsafer.memory.Fill(data, (byte)0, size);
-                return new PointerStruct { Data = data };
+                if (isClear) MemoryUnsafe.Fill(data, 0, size);
+                return new PointerStruct {Data = data};
             }
             return default(PointerStruct);
         }
+
         /// <summary>
-        /// 批量申请非托管内存
+        ///     批量申请非托管内存
         /// </summary>
         /// <param name="isClear">是否需要清除</param>
         /// <param name="sizes">内存字节数集合</param>
@@ -96,17 +103,20 @@ namespace TerumoMIS.CoreLibrary
                 foreach (var size in sizes)
                 {
                     if (size < 0) LogPlus.Error.Throw(LogPlus.ExceptionTypeEnum.IndexOutOfRange);
-                    checked { sum += size; }
+                    checked
+                    {
+                        sum += size;
+                    }
                 }
                 var pointer = Get(sum, isClear);
                 var data = pointer.Byte;
                 if (data != null)
                 {
-                    int index = 0;
-                    PointerStruct[] datas = new PointerStruct[sizes.Length];
-                    foreach (int size in sizes)
+                    var index = 0;
+                    var datas = new PointerStruct[sizes.Length];
+                    foreach (var size in sizes)
                     {
-                        datas[index++] = new PointerStruct { Data = data };
+                        datas[index++] = new PointerStruct {Data = data};
                         data += size;
                     }
                     return datas;
@@ -114,8 +124,9 @@ namespace TerumoMIS.CoreLibrary
             }
             return null;
         }
+
         /// <summary>
-        /// 释放内存
+        ///     释放内存
         /// </summary>
         /// <param name="data">非托管内存起始指针</param>
         public static void Free(ref PointerStruct data)
@@ -123,12 +134,13 @@ namespace TerumoMIS.CoreLibrary
             if (data.Data != null)
             {
                 Interlocked.Decrement(ref _usedCount);
-                Marshal.FreeHGlobal((IntPtr)data.Data);
+                Marshal.FreeHGlobal((IntPtr) data.Data);
                 data.Data = null;
             }
         }
+
         /// <summary>
-        /// 释放内存
+        ///     释放内存
         /// </summary>
         /// <param name="data">非托管内存起始指针</param>
         public static void Free(void* data)
@@ -136,7 +148,7 @@ namespace TerumoMIS.CoreLibrary
             if (data != null)
             {
                 Interlocked.Decrement(ref _usedCount);
-                Marshal.FreeHGlobal((IntPtr)data);
+                Marshal.FreeHGlobal((IntPtr) data);
             }
         }
     }

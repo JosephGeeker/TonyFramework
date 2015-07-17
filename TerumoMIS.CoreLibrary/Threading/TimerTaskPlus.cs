@@ -18,70 +18,71 @@
 //==============================================================
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
 using System.Timers;
+using TerumoMIS.CoreLibrary.Config;
 
 namespace TerumoMIS.CoreLibrary.Threading
 {
     /// <summary>
-    /// 定时任务信息
+    ///     定时任务信息
     /// </summary>
-    public sealed class TimerTaskPlus:IDisposable
+    public sealed class TimerTaskPlus : IDisposable
     {
         /// <summary>
-        /// 任务信息
+        ///     默认定时任务
         /// </summary>
-        private struct taskInfo
-        {
-            /// <summary>
-            /// 任务委托
-            /// </summary>
-            public Action Run;
-            /// <summary>
-            /// 错误处理
-            /// </summary>
-            public Action<Exception> OnError;
-        }
+        public static readonly TimerTaskPlus Default = new TimerTaskPlus(null);
+
         /// <summary>
-        /// 任务处理线程池
+        ///     任务处理线程池
         /// </summary>
-        private threadPool _threadPool;
+        private readonly ThreadPoolPlus _threadPool;
+
         /// <summary>
-        /// 已排序任务
+        ///     线程池任务
         /// </summary>
-        private arrayHeap<DateTime, taskInfo> _taskHeap = new arrayHeap<DateTime, taskInfo>();
+        private readonly Action _threadTaskHandle;
+
         /// <summary>
-        /// 定时器
-        /// </summary>
-        private System.Timers.Timer _timer = new System.Timers.Timer();
-        /// <summary>
-        /// 最近时间
+        ///     最近时间
         /// </summary>
         private DateTime _nearTime = DateTime.MaxValue;
+
         /// <summary>
-        /// 任务访问锁
+        ///     已排序任务
+        /// </summary>
+        private ArrayHeapPlus<DateTime, TaskInfoStruct> _taskHeap = new ArrayHeapPlus<DateTime, TaskInfoStruct>();
+
+        /// <summary>
+        ///     任务访问锁
         /// </summary>
         private int _taskLock;
+
         /// <summary>
-        /// 线程池任务
+        ///     定时器
         /// </summary>
-        private Action _threadTaskHandle;
-        /// <summary>
-        /// 定时任务信息
-        /// </summary>
-        /// <param name="task">任务处理线程池</param>
-        public timerTask(threadPool threadPool)
+        private Timer _timer = new Timer();
+
+        static TimerTaskPlus()
         {
-            this._threadPool = threadPool ?? threadPool.TinyPool;
-            _timer.Elapsed += onTimer;
-            _timer.AutoReset = false;
-            _threadTaskHandle = threadTask;
+            if (AppSettingPlus.IsCheckMemory) CheckMemoryPlus.Add(MethodBase.GetCurrentMethod().DeclaringType);
         }
+
         /// <summary>
-        /// 释放资源
+        ///     定时任务信息
+        /// </summary>
+        /// <param name="threadPool">任务处理线程池</param>
+        public TimerTaskPlus(ThreadPoolPlus threadPool)
+        {
+            _threadPool = threadPool ?? threadPool.TinyPool;
+            _timer.Elapsed += OnTimer;
+            _timer.AutoReset = false;
+            _threadTaskHandle = ThreadTask;
+        }
+
+        /// <summary>
+        ///     释放资源
         /// </summary>
         public void Dispose()
         {
@@ -93,15 +94,16 @@ namespace TerumoMIS.CoreLibrary.Threading
             }
             _taskHeap = null;
         }
+
         /// <summary>
-        /// 添加新任务
+        ///     添加新任务
         /// </summary>
         /// <param name="task">任务信息</param>
         /// <param name="runTime">执行时间</param>
-        private void add(taskInfo task, DateTime runTime)
+        private void AddBase(TaskInfoStruct task, DateTime runTime)
         {
-            bool isThread = false;
-            interlocked.NoCheckCompareSetSleep0(ref _taskLock);
+            var isThread = false;
+            InterlockedPlus.NoCheckCompareSetSleep0(ref _taskLock);
             try
             {
                 _taskHeap.Push(runTime, task);
@@ -109,7 +111,7 @@ namespace TerumoMIS.CoreLibrary.Threading
                 {
                     _timer.Stop();
                     _nearTime = runTime;
-                    double time = (runTime - date.Now).TotalMilliseconds;
+                    var time = (runTime - DatePlus.Now).TotalMilliseconds;
                     if (time > 0)
                     {
                         _timer.Interval = time;
@@ -118,11 +120,15 @@ namespace TerumoMIS.CoreLibrary.Threading
                     else isThread = true;
                 }
             }
-            finally { _taskLock = 0; }
-            if(isThread) _threadPool.FastStart(_threadTaskHandle, null, null);
+            finally
+            {
+                _taskLock = 0;
+            }
+            if (isThread) _threadPool.FastStart(_threadTaskHandle, null, null);
         }
+
         /// <summary>
-        /// 添加任务
+        ///     添加任务
         /// </summary>
         /// <param name="run">任务执行委托</param>
         /// <param name="runTime">执行时间</param>
@@ -131,12 +137,13 @@ namespace TerumoMIS.CoreLibrary.Threading
         {
             if (run != null)
             {
-                if (runTime > date.Now) add(new taskInfo { Run = run, OnError = onError }, runTime);
+                if (runTime > DatePlus.Now) AddBase(new TaskInfoStruct {Run = run, OnError = onError}, runTime);
                 else _threadPool.FastStart(run, null, onError);
             }
         }
+
         /// <summary>
-        /// 添加任务
+        ///     添加任务
         /// </summary>
         /// <typeparam name="TParameterType">执行参数类型</typeparam>
         /// <param name="run">任务执行委托</param>
@@ -148,22 +155,26 @@ namespace TerumoMIS.CoreLibrary.Threading
         {
             if (run != null)
             {
-                if (runTime > date.Now) add(new taskInfo { Run = run<TParameterType>.Create(run, parameter), OnError = onError }, runTime);
+                if (runTime > DatePlus.Now)
+                    AddBase(
+                        new TaskInfoStruct {Run = RunPlus<TParameterType>.Create(run, parameter), OnError = onError},
+                        runTime);
                 else _threadPool.FastStart(run, parameter, null, onError);
             }
         }
+
         /// <summary>
-        /// 线程池任务
+        ///     线程池任务
         /// </summary>
-        private void threadTask()
+        private void ThreadTask()
         {
-            DateTime now = date.Now;
-            interlocked.NoCheckCompareSetSleep0(ref _taskLock);
+            var now = DatePlus.Now;
+            InterlockedPlus.NoCheckCompareSetSleep0(ref _taskLock);
             try
             {
                 while (_taskHeap.Count != 0)
                 {
-                    keyValue<DateTime, taskInfo> task = _taskHeap.UnsafeTop();
+                    var task = _taskHeap.UnsafeTop();
                     if (task.Key <= now)
                     {
                         _threadPool.FastStart(task.Value.Run, null, task.Value.OnError);
@@ -181,7 +192,7 @@ namespace TerumoMIS.CoreLibrary.Threading
             }
             catch (Exception error)
             {
-                fastCSharp.log.Error.Add(error, null, false);
+                LogPlus.Error.Add(error, null, false);
                 _timer.Interval = 1;
                 _timer.Start();
             }
@@ -190,22 +201,31 @@ namespace TerumoMIS.CoreLibrary.Threading
                 _taskLock = 0;
             }
         }
+
         /// <summary>
-        /// 触发定时任务
+        ///     触发定时任务
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void onTimer(object sender, ElapsedEventArgs e)
+        private void OnTimer(object sender, ElapsedEventArgs e)
         {
-            threadTask();
+            ThreadTask();
         }
+
         /// <summary>
-        /// 默认定时任务
+        ///     任务信息
         /// </summary>
-        public static readonly timerTask Default = new timerTask(null);
-        static TimerTaskPlus()
+        private struct TaskInfoStruct
         {
-            if (fastCSharp.config.appSetting.IsCheckMemory) checkMemory.Add(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+            /// <summary>
+            ///     错误处理
+            /// </summary>
+            public Action<Exception> OnError;
+
+            /// <summary>
+            ///     任务委托
+            /// </summary>
+            public Action Run;
         }
     }
 }

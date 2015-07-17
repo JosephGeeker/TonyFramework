@@ -111,7 +111,7 @@ namespace TerumoMIS.CoreLibrary.Web
         ///     Json转换时间差
         /// </summary>
         public static readonly long JavascriptMinTimeTicks =
-            JsonParserPlus.ConfigPlus.appSetting.JavascriptMinTime.Ticks;
+            JsonParserPlus.ConfigPlus.appSettings.JavascriptMinTime.Ticks;
 
         static unsafe AjaxPlus()
         {

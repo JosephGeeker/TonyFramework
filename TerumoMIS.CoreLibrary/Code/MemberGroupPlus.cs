@@ -18,10 +18,6 @@
 //==============================================================
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TerumoMIS.CoreLibrary.Code
 {
@@ -42,11 +38,11 @@ namespace TerumoMIS.CoreLibrary.Code
         /// <summary>
         /// 公有动态属性
         /// </summary>
-        private propertyInfo<TValueType>[] _publicProperties;
+        private PropertyInfoPlus<TValueType>[] _publicProperties;
         /// <summary>
         /// 非公有动态属性
         /// </summary>
-        private propertyInfo<TValueType>[] _nonPublicProperties;
+        private PropertyInfoPlus<TValueType>[] _nonPublicProperties;
         /// <summary>
         /// 成员数量
         /// </summary>
@@ -75,13 +71,13 @@ namespace TerumoMIS.CoreLibrary.Code
         /// <param name="nonPublicProperties">非公有动态属性</param>
         /// <param name="filter">成员选择</param>
         private MemberGroupPlus(SubArrayStruct<FieldInfoPlus<TValueType>> publicFields, SubArrayStruct<FieldInfoPlus<TValueType>> nonPublicFields
-            , SubArrayStruct<propertyInfo<TValueType>> publicProperties, SubArrayStruct<propertyInfo<TValueType>> nonPublicProperties
+            , SubArrayStruct<PropertyInfoPlus<TValueType>> publicProperties, SubArrayStruct<PropertyInfoPlus<TValueType>> nonPublicProperties
             , MemberFiltersEnum filter)
         {
             _publicFields = (filter & MemberFiltersEnum.PublicInstanceField) != 0 ? publicFields.ToArray().notNull() : NullValuePlus<FieldInfoPlus<TValueType>>.Array;
             _nonPublicFields = (filter & MemberFiltersEnum.NonPublicInstanceField) != 0 ? nonPublicFields.ToArray().notNull() : NullValuePlus<FieldInfoPlus<TValueType>>.Array;
-            _publicProperties = (filter & MemberFiltersEnum.PublicInstanceProperty) != 0 ? publicProperties.ToArray().notNull() : NullValuePlus<propertyInfo<TValueType>>.Array;
-            _nonPublicProperties = (filter & MemberFiltersEnum.NonPublicInstanceProperty) != 0 ? nonPublicProperties.ToArray().notNull() : NullValuePlus<propertyInfo<TValueType>>.Array;
+            _publicProperties = (filter & MemberFiltersEnum.PublicInstanceProperty) != 0 ? publicProperties.ToArray().notNull() : NullValuePlus<PropertyInfoPlus<TValueType>>.Array;
+            _nonPublicProperties = (filter & MemberFiltersEnum.NonPublicInstanceProperty) != 0 ? nonPublicProperties.ToArray().notNull() : NullValuePlus<PropertyInfoPlus<TValueType>>.Array;
             Count = _publicFields.Length + _nonPublicFields.Length
                 + _publicProperties.Length + _nonPublicProperties.Length;
         }
@@ -95,7 +91,7 @@ namespace TerumoMIS.CoreLibrary.Code
         public SubArrayStruct<KeyValueStruct<MemberInfoPlus, object>> GetMemberValue(TValueType value
             , MemberFiltersEnum filter, MemberMapPlus memberMap)
         {
-            return isStruct ? GetMemberValueValue(value, filter, memberMap) : GetMemberValue(value, filter, memberMap);
+            return isStruct ? GetMemberValueValue(value, filter, MemberMapPlus) : GetMemberValue(value, filter, memberMap);
         }
         /// <summary>
         /// 引用类型获取成员名称与成员值集合
@@ -126,14 +122,14 @@ namespace TerumoMIS.CoreLibrary.Code
                 }
                 if ((filter & MemberFiltersEnum.PublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _publicProperties)
+                    foreach (PropertyInfoPlus<TValueType> property in _publicProperties)
                     {
                         values[count++].Set(property, property.Getter(value));
                     }
                 }
                 if ((filter & MemberFiltersEnum.NonPublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _nonPublicProperties)
+                    foreach (PropertyInfoPlus<TValueType> property in _nonPublicProperties)
                     {
                         values[count++].Set(property, property.Getter(value));
                     }
@@ -159,7 +155,7 @@ namespace TerumoMIS.CoreLibrary.Code
                 }
                 if ((filter & MemberFiltersEnum.PublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _publicProperties)
+                    foreach (PropertyInfoPlus<TValueType> property in _publicProperties)
                     {
                         if (memberMap.IsMember(property.MemberIndex))
                             values[count++].Set(property, property.Getter(value));
@@ -167,7 +163,7 @@ namespace TerumoMIS.CoreLibrary.Code
                 }
                 if ((filter & MemberFiltersEnum.NonPublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _nonPublicProperties)
+                    foreach (PropertyInfoPlus<TValueType> property in _nonPublicProperties)
                     {
                         if (memberMap.IsMember(property.MemberIndex))
                             values[count++].Set(property, property.Getter(value));
@@ -206,14 +202,14 @@ namespace TerumoMIS.CoreLibrary.Code
                 }
                 if ((filter & MemberFiltersEnum.PublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _publicProperties)
+                    foreach (PropertyInfoPlus<TValueType> property in _publicProperties)
                     {
                         values[count++].Set(property, property.ValueGetter(objectValue));
                     }
                 }
                 if ((filter & MemberFiltersEnum.NonPublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _nonPublicProperties)
+                    foreach (PropertyInfoPlus<TValueType> property in _nonPublicProperties)
                     {
                         values[count++].Set(property, property.ValueGetter(objectValue));
                     }
@@ -239,7 +235,7 @@ namespace TerumoMIS.CoreLibrary.Code
                 }
                 if ((filter & MemberFiltersEnum.PublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _publicProperties)
+                    foreach (PropertyInfoPlus<TValueType> property in _publicProperties)
                     {
                         if (memberMap.IsMember(property.MemberIndex))
                             values[count++].Set(property, property.ValueGetter(objectValue));
@@ -247,7 +243,7 @@ namespace TerumoMIS.CoreLibrary.Code
                 }
                 if ((filter & MemberFiltersEnum.NonPublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _nonPublicProperties)
+                    foreach (PropertyInfoPlus<TValueType> property in _nonPublicProperties)
                     {
                         if (memberMap.IsMember(property.MemberIndex))
                             values[count++].Set(property, property.ValueGetter(objectValue));
@@ -272,11 +268,11 @@ namespace TerumoMIS.CoreLibrary.Code
             {
                 if (isValueMap.Get(field.MemberIndex)) field.Setter(value, values[field.MemberIndex]);
             }
-            foreach (propertyInfo<TValueType> property in _publicProperties)
+            foreach (PropertyInfoPlus<TValueType> property in _publicProperties)
             {
                 if (isValueMap.Get(property.MemberIndex)) property.Setter(value, values[property.MemberIndex]);
             }
-            foreach (propertyInfo<TValueType> property in _nonPublicProperties)
+            foreach (PropertyInfoPlus<TValueType> property in _nonPublicProperties)
             {
                 if (isValueMap.Get(property.MemberIndex)) property.Setter(value, values[property.MemberIndex]);
             }
@@ -300,7 +296,7 @@ namespace TerumoMIS.CoreLibrary.Code
             {
                 if (isValueMap.Get(field.MemberIndex)) field.ValueSetter(objectValue, values[field.MemberIndex]);
             }
-            foreach (propertyInfo<TValueType> property in _publicProperties)
+            foreach (PropertyInfoPlus<TValueType> property in _publicProperties)
             {
                 if (isValueMap.Get(property.MemberIndex))
                 {
@@ -309,7 +305,7 @@ namespace TerumoMIS.CoreLibrary.Code
                     property.ValueSetter(objectValue, values[property.MemberIndex]);
                 }
             }
-            foreach (propertyInfo<TValueType> property in _nonPublicProperties)
+            foreach (PropertyInfoPlus<TValueType> property in _nonPublicProperties)
             {
                 if (isValueMap.Get(property.MemberIndex))
                 {
@@ -341,11 +337,11 @@ namespace TerumoMIS.CoreLibrary.Code
                 }
                 if ((filter & MemberFiltersEnum.PublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _publicProperties) property.Copyer(value, copyValue);
+                    foreach (PropertyInfoPlus<TValueType> property in _publicProperties) property.Copyer(value, copyValue);
                 }
                 if ((filter & MemberFiltersEnum.NonPublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _nonPublicProperties) property.Copyer(value, copyValue);
+                    foreach (PropertyInfoPlus<TValueType> property in _nonPublicProperties) property.Copyer(value, copyValue);
                 }
             }
             else
@@ -366,14 +362,14 @@ namespace TerumoMIS.CoreLibrary.Code
                 }
                 if ((filter & MemberFiltersEnum.PublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _publicProperties)
+                    foreach (PropertyInfoPlus<TValueType> property in _publicProperties)
                     {
                         if (memberMap.IsMember(property.MemberIndex)) property.Copyer(value, copyValue);
                     }
                 }
                 if ((filter & MemberFiltersEnum.NonPublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _nonPublicProperties)
+                    foreach (PropertyInfoPlus<TValueType> property in _nonPublicProperties)
                     {
                         if (memberMap.IsMember(property.MemberIndex)) property.Copyer(value, copyValue);
                     }
@@ -406,7 +402,7 @@ namespace TerumoMIS.CoreLibrary.Code
                 }
                 if ((filter & MemberFiltersEnum.PublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _publicProperties)
+                    foreach (PropertyInfoPlus<TValueType> property in _publicProperties)
                     {
                         //setValues[0] = property.GetValue(objectCopyValue);
                         //property.SetValue(objectValue, setValues);
@@ -415,7 +411,7 @@ namespace TerumoMIS.CoreLibrary.Code
                 }
                 if ((filter & MemberFiltersEnum.NonPublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _nonPublicProperties)
+                    foreach (PropertyInfoPlus<TValueType> property in _nonPublicProperties)
                     {
                         //setValues[0] = property.GetValue(objectCopyValue);
                         //property.SetValue(objectValue, setValues);
@@ -441,7 +437,7 @@ namespace TerumoMIS.CoreLibrary.Code
                 }
                 if ((filter & MemberFiltersEnum.PublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _publicProperties)
+                    foreach (PropertyInfoPlus<TValueType> property in _publicProperties)
                     {
                         if (memberMap.IsMember(property.MemberIndex))
                         {
@@ -453,7 +449,7 @@ namespace TerumoMIS.CoreLibrary.Code
                 }
                 if ((filter & MemberFiltersEnum.NonPublicInstanceProperty) != 0)
                 {
-                    foreach (propertyInfo<TValueType> property in _nonPublicProperties)
+                    foreach (PropertyInfoPlus<TValueType> property in _nonPublicProperties)
                     {
                         if (memberMap.IsMember(property.MemberIndex))
                         {
@@ -481,11 +477,11 @@ namespace TerumoMIS.CoreLibrary.Code
         /// <summary>
         /// 公有动态属性
         /// </summary>
-        private readonly static propertyInfo<TValueType>[] allPublicProperties;
+        private readonly static PropertyInfoPlus<TValueType>[] allPublicProperties;
         /// <summary>
         /// 非公有动态属性
         /// </summary>
-        private readonly static propertyInfo<TValueType>[] allNonPublicProperties;
+        private readonly static PropertyInfoPlus<TValueType>[] allNonPublicProperties;
         /// <summary>
         /// 成员集合
         /// </summary>
@@ -562,7 +558,7 @@ namespace TerumoMIS.CoreLibrary.Code
         {
             FieldInfoPlus<TValueType> field = member as FieldInfoPlus<TValueType>;
             if (field != null) return isStruct ? field.GetValue : field.Getter;
-            propertyInfo<TValueType> property = (propertyInfo<TValueType>)member;
+            PropertyInfoPlus<TValueType> property = (PropertyInfoPlus<TValueType>)member;
             return isStruct ? property.GetValue : property.Getter;
         }
         /// <summary>
@@ -585,7 +581,7 @@ namespace TerumoMIS.CoreLibrary.Code
         {
             FieldInfoPlus<TValueType> field = member as FieldInfoPlus<TValueType>;
             if (field != null) return isStruct ? field.SetValue : field.Setter;
-            propertyInfo<TValueType> property = (propertyInfo<TValueType>)member;
+            PropertyInfoPlus<TValueType> property = (PropertyInfoPlus<TValueType>)member;
             return isStruct ? property.SetValue : property.Setter;
         }
         /// <summary>
@@ -619,13 +615,13 @@ namespace TerumoMIS.CoreLibrary.Code
                 memberIndexGroup group = memberIndexGroup.Get(type);
                 allPublicFields = group.PublicFields.getArray(value => new FieldInfoPlus<TValueType>(value, isStruct));
                 allNonPublicFields = group.NonPublicFields.getArray(value => new FieldInfoPlus<TValueType>(value, isStruct));
-                allPublicProperties = group.PublicProperties.getArray(value => new propertyInfo<TValueType>(value, isStruct));
-                allNonPublicProperties = group.NonPublicProperties.getArray(value => new propertyInfo<TValueType>(value, isStruct));
+                allPublicProperties = group.PublicProperties.getArray(value => new PropertyInfoPlus<TValueType>(value, isStruct));
+                allNonPublicProperties = group.NonPublicProperties.getArray(value => new PropertyInfoPlus<TValueType>(value, isStruct));
             }
             else
             {
                 allPublicFields = allNonPublicFields = nullValue<FieldInfoPlus<TValueType>>.Array;
-                allPublicProperties = allNonPublicProperties = nullValue<propertyInfo<TValueType>>.Array;
+                allPublicProperties = allNonPublicProperties = nullValue<PropertyInfoPlus<TValueType>>.Array;
             }
         }
     }

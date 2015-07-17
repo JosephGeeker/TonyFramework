@@ -18,96 +18,104 @@
 //==============================================================
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TerumoMIS.CoreLibrary.Web
 {
     /// <summary>
-    /// Http参数及相关操作
+    ///     Http参数及相关操作
     /// </summary>
     public static class HttpPlus
     {
         /// <summary>
-        /// 查询模式类别
+        ///     查询模式类别
         /// </summary>
-        public enum methodType : byte
+        public enum MethodTypeEnum : byte
         {
             None = 0,
+
             /// <summary>
-            /// 请求获取Request-URI所标识的资源
+            ///     请求获取Request-URI所标识的资源
             /// </summary>
-            GET,
+            Get,
+
             /// <summary>
-            /// 在Request-URI所标识的资源后附加新的数据
+            ///     在Request-URI所标识的资源后附加新的数据
             /// </summary>
-            POST,
+            Post,
+
             /// <summary>
-            /// 请求获取由Request-URI所标识的资源的响应消息报头
+            ///     请求获取由Request-URI所标识的资源的响应消息报头
             /// </summary>
-            HEAD,
+            Head,
+
             /// <summary>
-            /// 请求服务器存储一个资源，并用Request-URI作为其标识
+            ///     请求服务器存储一个资源，并用Request-URI作为其标识
             /// </summary>
-            PUT,
+            Put,
+
             /// <summary>
-            /// 请求服务器删除Request-URI所标识的资源
+            ///     请求服务器删除Request-URI所标识的资源
             /// </summary>
-            DELETE,
+            Delete,
+
             /// <summary>
-            /// 请求服务器回送收到的请求信息，主要用于测试或诊断
+            ///     请求服务器回送收到的请求信息，主要用于测试或诊断
             /// </summary>
-            TRACE,
+            Trace,
+
             /// <summary>
-            /// 保留将来使用
+            ///     保留将来使用
             /// </summary>
-            CONNECT,
+            Connect,
+
             /// <summary>
-            /// 请求查询服务器的性能，或者查询与资源相关的选项和需求
+            ///     请求查询服务器的性能，或者查询与资源相关的选项和需求
             /// </summary>
-            OPTIONS
-        }
-        /// <summary>
-        /// 查询模式类型集合
-        /// </summary>
-        private static methodType[] uniqueTypes;
-        /// <summary>
-        /// 查询模式字节转枚举
-        /// </summary>
-        /// <param name="method">查询模式</param>
-        /// <returns>查询模式枚举</returns>
-        internal static unsafe methodType GetMethod(byte* method)
-        {
-            uint code = *(uint*)method;
-            return uniqueTypes[((code >> 12) ^ code) & ((1U << 4) - 1)];
+            Options
         }
 
-        unsafe static http()
+        /// <summary>
+        ///     查询模式类型集合
+        /// </summary>
+        private static readonly MethodTypeEnum[] UniqueTypes;
+
+        static unsafe HttpPlus()
         {
-            uniqueTypes = new methodType[1 << 4];
+            UniqueTypes = new MethodTypeEnum[1 << 4];
             uint code;
-            byte* methodBufferFixed = (byte*)&code;
-            foreach (methodType method in System.Enum.GetValues(typeof(fastCSharp.web.http.methodType)))
+            var methodBufferFixed = (byte*) &code;
+            foreach (MethodTypeEnum method in Enum.GetValues(typeof (MethodTypeEnum)))
             {
-                if (method != methodType.None)
+                if (method != MethodTypeEnum.None)
                 {
-                    string methodString = method.ToString();
+                    var methodString = method.ToString();
                     fixed (char* methodFixed = methodString)
                     {
                         byte* write = methodBufferFixed, end = methodBufferFixed;
-                        if (methodString.Length >= sizeof(int)) end += sizeof(int);
+                        if (methodString.Length >= sizeof (int)) end += sizeof (int);
                         else
                         {
                             code = 0x20202020U;
                             end += methodString.Length;
                         }
-                        for (char* read = methodFixed; write != end; *write++ = (byte)*read++) ;
-                        uniqueTypes[((code >> 12) ^ code) & ((1U << 4) - 1)] = method;
+                        for (var read = methodFixed; write != end; *write++ = (byte) *read++)
+                        {
+                        }
+                        UniqueTypes[((code >> 12) ^ code) & ((1U << 4) - 1)] = method;
                     }
                 }
             }
+        }
+
+        /// <summary>
+        ///     查询模式字节转枚举
+        /// </summary>
+        /// <param name="method">查询模式</param>
+        /// <returns>查询模式枚举</returns>
+        internal static unsafe MethodTypeEnum GetMethod(byte* method)
+        {
+            var code = *(uint*) method;
+            return UniqueTypes[((code >> 12) ^ code) & ((1U << 4) - 1)];
         }
     }
 }

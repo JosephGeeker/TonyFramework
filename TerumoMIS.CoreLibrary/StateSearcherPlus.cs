@@ -18,31 +18,28 @@
 //==============================================================
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace TerumoMIS.CoreLibrary
 {
     /// <summary>
     /// 状态搜索器
     /// </summary>
-    public unsafe static class StaticSearcherPlus
+    public unsafe static class StateSearcherPlus
     {
         /// <summary>
         /// 字节数组比较大小
         /// </summary>
-        private static Func<keyValue<byte[], int>, keyValue<byte[], int>, int> compareHanlde = compare;
+        private static Func<KeyValueStruct<byte[], int>, KeyValueStruct<byte[], int>, int> _compareHanlde = Compare;
         /// <summary>
         /// 字节数组比较大小
         /// </summary>
         /// <param name="left"></param>
         /// <param name="right"></param>
         /// <returns></returns>
-        private static int compare(keyValue<byte[], int> left, keyValue<byte[], int> right)
+        private static int Compare(KeyValueStruct<byte[], int> left, KeyValueStruct<byte[], int> right)
         {
-            int length = Math.Min(left.Key.Length, right.Key.Length);
+            var length = Math.Min(left.Key.Length, right.Key.Length);
             fixed (byte* leftFixed = left.Key, rightFixed = right.Key)
             {
                 for (byte* start = leftFixed, end = leftFixed + length, read = rightFixed; start != end; ++start, ++read)
@@ -55,58 +52,58 @@ namespace TerumoMIS.CoreLibrary
         /// <summary>
         /// 字符串比较大小
         /// </summary>
-        private static Func<keyValue<string, int>, keyValue<string, int>, int> stringCompare = compare;
+        private static Func<KeyValueStruct<string, int>, KeyValueStruct<string, int>, int> _stringCompare = Compare;
         /// <summary>
         /// 字符串比较大小
         /// </summary>
         /// <param name="left"></param>
         /// <param name="right"></param>
         /// <returns></returns>
-        private static int compare(keyValue<string, int> left, keyValue<string, int> right)
+        private static int Compare(KeyValueStruct<string, int> left, KeyValueStruct<string, int> right)
         {
             return string.CompareOrdinal(left.Key, right.Key);
         }
         /// <summary>
         /// ASCII字节搜索器
         /// </summary>
-        private struct ascii
+        private struct AsciiStruct
         {
             /// <summary>
             /// 状态集合
             /// </summary>
-            private byte* state;
+            private byte* _state;
             /// <summary>
             /// ASCII字符查找表
             /// </summary>
-            private byte* charsAscii;
+            private byte* _charsAscii;
             /// <summary>
             /// 当前状态
             /// </summary>
-            private byte* currentState;
+            private byte* _currentState;
             /// <summary>
             /// 查询矩阵单位尺寸类型
             /// </summary>
-            private byte tableType;
+            private byte _tableType;
             /// <summary>
             /// ASCII字节搜索器
             /// </summary>
             /// <param name="data">数据起始位置</param>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ascii(pointer data)
+            public AsciiStruct(PointerStruct data)
             {
                 if (data.Data == null)
                 {
-                    state = charsAscii = currentState = null;
-                    tableType = 0;
+                    _state = _charsAscii = _currentState = null;
+                    _tableType = 0;
                 }
                 else
                 {
                     int stateCount = *data.Int;
-                    currentState = state = data.Byte + sizeof(int);
-                    charsAscii = state + stateCount * 3 * sizeof(int);
-                    if (stateCount < 256) tableType = 0;
-                    else if (stateCount < 65536) tableType = 1;
-                    else tableType = 2;
+                    _currentState = _state = data.Byte + sizeof(int);
+                    _charsAscii = _state + stateCount * 3 * sizeof(int);
+                    if (stateCount < 256) _tableType = 0;
+                    else if (stateCount < 65536) _tableType = 1;
+                    else _tableType = 2;
                 }
             }
             /// <summary>
@@ -117,32 +114,32 @@ namespace TerumoMIS.CoreLibrary
             /// <returns>状态索引,失败返回-1</returns>
             public int Search(byte* start, byte* end)
             {
-                if (state == null || start >= end) return -1;
-                currentState = state;
+                if (_state == null || start >= end) return -1;
+                _currentState = _state;
                 do
                 {
-                    for (byte* prefix = currentState + *(int*)currentState; *prefix != 0; ++prefix, ++start)
+                    for (byte* prefix = _currentState + *(int*)_currentState; *prefix != 0; ++prefix, ++start)
                     {
                         if (start == end || *start != *prefix) return -1;
                     }
-                    if (start == end) return *(int*)(currentState + sizeof(int) * 2);
-                    if (*(int*)(currentState + sizeof(int)) == 0) return -1;
-                    int index = (int)*(charsAscii + *start);
-                    byte* table = currentState + *(int*)(currentState + sizeof(int));
-                    if (tableType == 0)
+                    if (start == end) return *(int*)(_currentState + sizeof(int) * 2);
+                    if (*(int*)(_currentState + sizeof(int)) == 0) return -1;
+                    int index = *(_charsAscii + *start);
+                    byte* table = _currentState + *(int*)(_currentState + sizeof(int));
+                    if (_tableType == 0)
                     {
                         if ((index = *(table + index)) == 0) return -1;
-                        currentState = state + index * 3 * sizeof(int);
+                        _currentState = _state + index * 3 * sizeof(int);
                     }
-                    else if (tableType == 1)
+                    else if (_tableType == 1)
                     {
-                        if ((index = (int)*(ushort*)(table + index * sizeof(ushort))) == 0) return -1;
-                        currentState = state + index * 3 * sizeof(int);
+                        if ((index = *(ushort*)(table + index * sizeof(ushort))) == 0) return -1;
+                        _currentState = _state + index * 3 * sizeof(int);
                     }
                     else
                     {
                         if ((index = *(int*)(table + index * sizeof(int))) == 0) return -1;
-                        currentState = state + index;
+                        _currentState = _state + index;
                     }
                     ++start;
                 }
@@ -168,11 +165,11 @@ namespace TerumoMIS.CoreLibrary
             /// <param name="data">匹配状态</param>
             /// <returns>状态索引,失败返回-1</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int Search(subArray<byte> data)
+            public int Search(SubArrayStruct<byte> data)
             {
                 if (data.Count != 0)
                 {
-                    fixed (byte* dataFixed = data.array)
+                    fixed (byte* dataFixed = data.Array)
                     {
                         byte* start = dataFixed + data.StartIndex;
                         return Search(start, start + data.Count);
@@ -189,32 +186,32 @@ namespace TerumoMIS.CoreLibrary
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public int Search(char* start, char* end)
             {
-                if (state == null || start >= end) return -1;
-                currentState = state;
+                if (_state == null || start >= end) return -1;
+                _currentState = _state;
                 do
                 {
-                    for (byte* prefix = currentState + *(int*)currentState; *prefix != 0; ++prefix, ++start)
+                    for (byte* prefix = _currentState + *(int*)_currentState; *prefix != 0; ++prefix, ++start)
                     {
                         if (start == end || *start != *prefix) return -1;
                     }
-                    if (start == end) return *(int*)(currentState + sizeof(int) * 2);
-                    if (*(int*)(currentState + sizeof(int)) == 0) return -1;
-                    int index = (int)*(charsAscii + *start);
-                    byte* table = currentState + *(int*)(currentState + sizeof(int));
-                    if (tableType == 0)
+                    if (start == end) return *(int*)(_currentState + sizeof(int) * 2);
+                    if (*(int*)(_currentState + sizeof(int)) == 0) return -1;
+                    int index = *(_charsAscii + *start);
+                    byte* table = _currentState + *(int*)(_currentState + sizeof(int));
+                    if (_tableType == 0)
                     {
                         if ((index = *(table + index)) == 0) return -1;
-                        currentState = state + index * 3 * sizeof(int);
+                        _currentState = _state + index * 3 * sizeof(int);
                     }
-                    else if (tableType == 1)
+                    else if (_tableType == 1)
                     {
-                        if ((index = (int)*(ushort*)(table + index * sizeof(ushort))) == 0) return -1;
-                        currentState = state + index * 3 * sizeof(int);
+                        if ((index = *(ushort*)(table + index * sizeof(ushort))) == 0) return -1;
+                        _currentState = _state + index * 3 * sizeof(int);
                     }
                     else
                     {
                         if ((index = *(int*)(table + index * sizeof(int))) == 0) return -1;
-                        currentState = state + index;
+                        _currentState = _state + index;
                     }
                     ++start;
                 }
@@ -229,37 +226,37 @@ namespace TerumoMIS.CoreLibrary
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public int Remove(char* start, char* end)
             {
-                if (state == null || start >= end) return -1;
-                currentState = state;
+                if (_state == null || start >= end) return -1;
+                _currentState = _state;
                 do
                 {
-                    for (byte* prefix = currentState + *(int*)currentState; *prefix != 0; ++prefix, ++start)
+                    for (byte* prefix = _currentState + *(int*)_currentState; *prefix != 0; ++prefix, ++start)
                     {
                         if (start == end || *start != *prefix) return -1;
                     }
                     if (start == end)
                     {
-                        int removeIndex = *(int*)(currentState + sizeof(int) * 2);
-                        *(int*)(currentState + sizeof(int) * 2) = -1;
+                        int removeIndex = *(int*)(_currentState + sizeof(int) * 2);
+                        *(int*)(_currentState + sizeof(int) * 2) = -1;
                         return removeIndex;
                     }
-                    if (*(int*)(currentState + sizeof(int)) == 0) return -1;
-                    int index = (int)*(charsAscii + *start);
-                    byte* table = currentState + *(int*)(currentState + sizeof(int));
-                    if (tableType == 0)
+                    if (*(int*)(_currentState + sizeof(int)) == 0) return -1;
+                    int index = *(_charsAscii + *start);
+                    byte* table = _currentState + *(int*)(_currentState + sizeof(int));
+                    if (_tableType == 0)
                     {
                         if ((index = *(table + index)) == 0) return -1;
-                        currentState = state + index * 3 * sizeof(int);
+                        _currentState = _state + index * 3 * sizeof(int);
                     }
-                    else if (tableType == 1)
+                    else if (_tableType == 1)
                     {
-                        if ((index = (int)*(ushort*)(table + index * sizeof(ushort))) == 0) return -1;
-                        currentState = state + index * 3 * sizeof(int);
+                        if ((index = *(ushort*)(table + index * sizeof(ushort))) == 0) return -1;
+                        _currentState = _state + index * 3 * sizeof(int);
                     }
                     else
                     {
                         if ((index = *(int*)(table + index * sizeof(int))) == 0) return -1;
-                        currentState = state + index;
+                        _currentState = _state + index;
                     }
                     ++start;
                 }
@@ -299,11 +296,11 @@ namespace TerumoMIS.CoreLibrary
             /// <param name="value">匹配状态</param>
             /// <returns>状态索引,失败返回-1</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int Search(subString value)
+            public int Search(SubStringStruct value)
             {
                 if (value.Length != 0)
                 {
-                    fixed (char* valueFixed = value.value)
+                    fixed (char* valueFixed = value.Value)
                     {
                         char* start = valueFixed + value.StartIndex;
                         return Search(start, start + value.Length);
@@ -314,12 +311,12 @@ namespace TerumoMIS.CoreLibrary
             /// <summary>
             /// 状态数据创建器
             /// </summary>
-            private struct stringBuilder
+            private struct StringBuilderStruct
             {
                 /// <summary>
                 /// 状态集合
                 /// </summary>
-                private keyValue<string, int>[] values;
+                private keyValue<string, int>[] _values;
                 /// <summary>
                 /// 状态数据
                 /// </summary>
@@ -368,9 +365,9 @@ namespace TerumoMIS.CoreLibrary
                 /// 状态数据创建器
                 /// </summary>
                 /// <param name="values">状态集合</param>
-                public stringBuilder(keyValue<string, int>[] values)
+                public StringBuilderStruct(keyValue<string, int>[] values)
                 {
-                    this.values = values;
+                    this._values = values;
                     prefixSize = tableCount = stateCount = tableType = charCount = 0;
                     state = charsAscii = prefix = table = null;
                     if (values.Length > 1)
@@ -452,10 +449,10 @@ namespace TerumoMIS.CoreLibrary
                     ++tableCount;
                     int index = start, prefixSize = 0;
                     char value = (char)0;
-                    while (values[start].Key.Length != current)
+                    while (_values[start].Key.Length != current)
                     {
-                        value = values[start].Key[current];
-                        while (++index != end && values[index].Key[current] == value) ;
+                        value = _values[start].Key[current];
+                        while (++index != end && _values[index].Key[current] == value) ;
                         if (index != end) break;
                         ++prefixSize;
                         index = start;
@@ -473,14 +470,14 @@ namespace TerumoMIS.CoreLibrary
                             if (count == 1)
                             {
                                 ++stateCount;
-                                prefixSize = values[start].Key.Length - current - 1;
+                                prefixSize = _values[start].Key.Length - current - 1;
                                 if (prefixSize != 0) this.prefixSize += prefixSize + 1;
                             }
                             else this.count(start, index, current + 1);
                         }
                         if (index == end) break;
-                        value = values[start = index].Key[current];
-                        while (++index != end && values[index].Key[current] == value) ;
+                        value = _values[start = index].Key[current];
+                        while (++index != end && _values[index].Key[current] == value) ;
                     }
                     while (true);
                 }
@@ -496,22 +493,22 @@ namespace TerumoMIS.CoreLibrary
                     *(int*)(state + sizeof(int)) = (int)(table - state);
                     int index = start;
                     char value = (char)0;
-                    if (values[start].Key.Length == current) *(int*)(state + sizeof(int) * 2) = values[start].Value;
+                    if (_values[start].Key.Length == current) *(int*)(state + sizeof(int) * 2) = _values[start].Value;
                     else
                     {
                         do
                         {
-                            value = values[index].Key[current];
-                            while (++index != end && values[index].Key[current] == value) ;
+                            value = _values[index].Key[current];
+                            while (++index != end && _values[index].Key[current] == value) ;
                             if (index != end)
                             {
                                 *(int*)(state + sizeof(int) * 2) = -1;
                                 break;
                             }
                             *this.prefix++ = (byte)value;
-                            if (values[index = start].Key.Length == ++current)
+                            if (_values[index = start].Key.Length == ++current)
                             {
-                                *(int*)(state + sizeof(int) * 2) = values[index].Value;
+                                *(int*)(state + sizeof(int) * 2) = _values[index].Value;
                                 break;
                             }
                         }
@@ -540,27 +537,27 @@ namespace TerumoMIS.CoreLibrary
                             else *(int*)(table + charIndex * sizeof(int)) = stateCount * 3 * sizeof(int);
                             if (count == 1)
                             {
-                                int prefixSize = values[start].Key.Length - current - 1;
+                                int prefixSize = _values[start].Key.Length - current - 1;
                                 if (prefixSize == 0) *(int*)state = (int)(charsAscii - state);
                                 else
                                 {
                                     *(int*)state = (int)(this.prefix - state);
-                                    fixed (char* charFixed = values[start].Key)
+                                    fixed (char* charFixed = _values[start].Key)
                                     {
                                         fastCSharp.unsafer.String.WriteBytes(charFixed + current + 1, prefixSize, this.prefix);
                                         *(this.prefix += prefixSize) = 0;
                                         ++this.prefix;
                                     }
                                 }
-                                *(int*)(state + sizeof(int) * 2) = values[start].Value;
+                                *(int*)(state + sizeof(int) * 2) = _values[start].Value;
                                 ++stateCount;
                                 state += sizeof(int) * 3;
                             }
                             else create(start, index, current + 1);
                         }
                         if (index == end) break;
-                        value = values[start = index].Key[current];
-                        while (++index != end && values[index].Key[current] == value) ;
+                        value = _values[start = index].Key[current];
+                        while (++index != end && _values[index].Key[current] == value) ;
                     }
                     while (true);
                 }
@@ -835,8 +832,8 @@ namespace TerumoMIS.CoreLibrary
                         strings[index].Set(name, index);
                         ++index;
                     }
-                    strings = strings.sort(stringCompare);
-                    return new stringBuilder(strings).Data;
+                    strings = strings.sort(_stringCompare);
+                    return new StringBuilderStruct(strings).Data;
                 }
                 return new pointer();
             }
@@ -856,7 +853,7 @@ namespace TerumoMIS.CoreLibrary
                         datas[index].Set(name, index);
                         ++index;
                     }
-                    datas = datas.sort(compareHanlde);
+                    datas = datas.sort(_compareHanlde);
                     return new byteArrayBuilder(datas).Data;
                 }
                 return new pointer();
@@ -886,7 +883,7 @@ namespace TerumoMIS.CoreLibrary
                 if (states == null || values == null) log.Default.Throw(log.exceptionType.Null);
                 if (states.Length > values.Length) log.Default.Throw(log.exceptionType.IndexOutOfRange);
                 this.values = values;
-                data = ascii.Create(states);
+                data = AsciiStruct.Create(states);
             }
             /// <summary>
             /// ASCII字节状态搜索
@@ -898,7 +895,7 @@ namespace TerumoMIS.CoreLibrary
                 if (states == null || values == null) log.Default.Throw(log.exceptionType.Null);
                 if (states.Length > values.Length) log.Default.Throw(log.exceptionType.IndexOutOfRange);
                 this.values = values;
-                data = ascii.Create(states);
+                data = AsciiStruct.Create(states);
             }
             /// <summary>
             /// 获取状态数据
@@ -909,7 +906,7 @@ namespace TerumoMIS.CoreLibrary
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public valueType Get(byte[] state, valueType nullValue = default(valueType))
             {
-                int index = new ascii(data).Search(state);
+                int index = new AsciiStruct(data).Search(state);
                 return index >= 0 ? values[index] : nullValue;
             }
             /// <summary>
@@ -921,7 +918,7 @@ namespace TerumoMIS.CoreLibrary
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool Get(byte[] state, ref valueType value)
             {
-                int index = new ascii(data).Search(state);
+                int index = new AsciiStruct(data).Search(state);
                 if (index >= 0)
                 {
                     value = values[index];
@@ -938,7 +935,7 @@ namespace TerumoMIS.CoreLibrary
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public valueType Get(subArray<byte> state, valueType nullValue = default(valueType))
             {
-                int index = new ascii(data).Search(state);
+                int index = new AsciiStruct(data).Search(state);
                 return index >= 0 ? values[index] : nullValue;
             }
             /// <summary>
@@ -950,7 +947,7 @@ namespace TerumoMIS.CoreLibrary
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool Get(subArray<byte> state, ref valueType value)
             {
-                int index = new ascii(data).Search(state);
+                int index = new AsciiStruct(data).Search(state);
                 if (index >= 0)
                 {
                     value = values[index];
@@ -967,7 +964,7 @@ namespace TerumoMIS.CoreLibrary
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public valueType Get(string state, valueType nullValue = default(valueType))
             {
-                int index = new ascii(data).Search(state);
+                int index = new AsciiStruct(data).Search(state);
                 return index >= 0 ? values[index] : nullValue;
             }
             /// <summary>
@@ -978,7 +975,7 @@ namespace TerumoMIS.CoreLibrary
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool ContainsKey(string state)
             {
-                return new ascii(data).Search(state) >= 0;
+                return new AsciiStruct(data).Search(state) >= 0;
             }
             /// <summary>
             /// 删除状态数据
@@ -988,7 +985,7 @@ namespace TerumoMIS.CoreLibrary
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool Remove(string state)
             {
-                return new ascii(data).Remove(state) >= 0;
+                return new AsciiStruct(data).Remove(state) >= 0;
             }
             /// <summary>
             /// 获取状态数据
@@ -999,7 +996,7 @@ namespace TerumoMIS.CoreLibrary
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public valueType Get(subString state, valueType nullValue = default(valueType))
             {
-                int index = new ascii(data).Search(state);
+                int index = new AsciiStruct(data).Search(state);
                 return index >= 0 ? values[index] : nullValue;
             }
             /// <summary>
@@ -1010,7 +1007,7 @@ namespace TerumoMIS.CoreLibrary
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool ContainsKey(subString state)
             {
-                return new ascii(data).Search(state) >= 0;
+                return new AsciiStruct(data).Search(state) >= 0;
             }
             /// <summary>
             /// 释放资源
@@ -1407,7 +1404,7 @@ namespace TerumoMIS.CoreLibrary
                         strings[index].Set(name, index);
                         ++index;
                     }
-                    strings = strings.sort(compareHanlde);
+                    strings = strings.sort(_compareHanlde);
                     return new builder(strings).Data;
                 }
                 return new pointer();
@@ -1967,7 +1964,7 @@ namespace TerumoMIS.CoreLibrary
                     strings[index].Set(name, index);
                     ++index;
                 }
-                strings = strings.sort(stringCompare);
+                strings = strings.sort(_stringCompare);
                 return new builder(strings).Data;
             }
         }

@@ -22,20 +22,22 @@ using System;
 namespace TerumoMIS.CoreLibrary.Threading
 {
     /// <summary>
-    /// 任务信息
+    ///     任务信息
     /// </summary>
     internal struct TaskInfoStruct
     {
         /// <summary>
-        /// 调用委托
+        ///     调用委托
         /// </summary>
         public Action Call;
+
         /// <summary>
-        /// 任务执行出错委托,停止任务参数null
+        ///     任务执行出错委托,停止任务参数null
         /// </summary>
         public Action<Exception> OnError;
+
         /// <summary>
-        /// 执行任务
+        ///     执行任务
         /// </summary>
         public void Run()
         {
@@ -45,7 +47,7 @@ namespace TerumoMIS.CoreLibrary.Threading
             }
             catch (Exception error)
             {
-                if (OnError == null) fastCSharp.log.Error.Add(error, null, false);
+                if (OnError == null) LogPlus.Error.Add(error, null, false);
                 else
                 {
                     try
@@ -54,13 +56,14 @@ namespace TerumoMIS.CoreLibrary.Threading
                     }
                     catch (Exception exception)
                     {
-                        fastCSharp.log.Error.Add(exception, null, false);
+                        LogPlus.Error.Add(exception, null, false);
                     }
                 }
             }
         }
+
         /// <summary>
-        /// 执行任务
+        ///     执行任务
         /// </summary>
         public void RunClear()
         {

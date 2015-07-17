@@ -18,11 +18,9 @@
 //==============================================================
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+using TerumoMIS.CoreLibrary.Code.Csharper;
+using TerumoMIS.CoreLibrary.Emit;
 
 namespace TerumoMIS.CoreLibrary
 {
@@ -141,10 +139,11 @@ namespace TerumoMIS.CoreLibrary
         /// </summary>
         /// <param name="serializer">对象序列化器</param>
         /// <param name="value">128位整数</param>
-        [fastCSharp.emit.dataSerialize.custom]
-        private unsafe static void Serialize(fastCSharp.emit.dataSerializer serializer, Uint128Struct value)
+        [DataSerializerPlus.custom]
+        private unsafe static void Serialize(DataSerializerPlus serializer, Uint128Struct value)
         {
-            UnmanagedStreamPlus stream = serializer.Stream;
+            if (serializer == null) throw new ArgumentNullException("serializer");
+            var stream = serializer.Stream;
             stream.PrepLength(sizeof(ulong) + sizeof(ulong));
             var write = stream.CurrentData;
             *(ulong*)write = value.Low;
@@ -157,8 +156,8 @@ namespace TerumoMIS.CoreLibrary
         /// </summary>
         /// <param name="deSerializer">对象反序列化器</param>
         /// <param name="value">128位整数</param>
-        [fastCSharp.emit.dataSerialize.custom]
-        private unsafe static void DeSerialize(fastCSharp.emit.dataDeSerializer deSerializer, ref Uint128Struct value)
+        [DataSerializerPlus.custom]
+        private unsafe static void DeSerialize(DataSerializerPlus deSerializer, ref Uint128Struct value)
         {
             if (deSerializer.VerifyRead(sizeof(ulong) + sizeof(ulong)))
             {

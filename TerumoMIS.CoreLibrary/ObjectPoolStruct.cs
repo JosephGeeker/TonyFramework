@@ -18,94 +18,115 @@
 //==============================================================
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+using TerumoMIS.CoreLibrary.Config;
+using TerumoMIS.CoreLibrary.Threading;
 
 namespace TerumoMIS.CoreLibrary
 {
     /// <summary>
-    /// 数组池
+    ///     数组池
     /// </summary>
-    /// <typeparam name="valueType"></typeparam>
-    public struct ObjectPoolStruct<valueType>
-        where valueType:class 
+    /// <typeparam name="TValueType"></typeparam>
+    public struct ObjectPoolStruct<TValueType>
+        where TValueType : class
     {
         /// <summary>
-        /// 释放资源委托
+        ///     释放资源委托
         /// </summary>
-        internal static readonly Action<valueType> Dispose;
+        internal static readonly Action<TValueType> Dispose;
+
         /// <summary>
-        /// 数据集合
+        ///     数据集合
         /// </summary>
-        private IEnumeratorPlus<>.array.value<valueType>[] array;
+        private ArrayPlus.ValueStruct<TValueType>[] _array;
+
         /// <summary>
-        /// 数据数量
+        ///     数据集合访问锁
+        /// </summary>
+        private int _arrayLock;
+
+        /// <summary>
+        ///     集合更新访问锁
+        /// </summary>
+        private object _newLock;
+
+        /// <summary>
+        ///     数据数量
         /// </summary>
         internal int Count;
+
+        static ObjectPoolStruct()
+        {
+            var type = typeof (TValueType);
+            if (typeof (IDisposable).IsAssignableFrom(type))
+            {
+                Dispose =
+                    (Action<TValueType>)
+                        Delegate.CreateDelegate(typeof (Action<TValueType>),
+                            type.GetMethod("Dispose", BindingFlags.Public | BindingFlags.Instance, null,
+                                NullValuePlus<Type>.Array, null));
+            }
+        }
+
         /// <summary>
-        /// 数据集合访问锁
-        /// </summary>
-        private int arrayLock;
-        /// <summary>
-        /// 集合更新访问锁
-        /// </summary>
-        private object newLock;
-        /// <summary>
-        /// 添加数据
+        ///     添加数据
         /// </summary>
         /// <param name="value"></param>
-        public void Push(valueType value)
+        public void Push(TValueType value)
         {
-        PUSH:
-            interlocked.NoCheckCompareSetSleep0(ref arrayLock);
-            if (Count == array.Length)
+            PUSH:
+            InterlockedPlus.NoCheckCompareSetSleep0(ref _arrayLock);
+            if (Count == _array.Length)
             {
-                int length = Count;
-                arrayLock = 0;
-                Monitor.Enter(newLock);
-                if (length == array.Length)
+                var length = Count;
+                _arrayLock = 0;
+                Monitor.Enter(_newLock);
+                if (length == _array.Length)
                 {
                     try
                     {
-                        IEnumeratorPlus<>.array.value<valueType>[] newArray = new IEnumeratorPlus<>.array.value<valueType>[length << 1];
-                        interlocked.NoCheckCompareSetSleep0(ref arrayLock);
-                        System.Array.Copy(array, 0, newArray, 0, Count);
+                        var newArray = new ArrayPlus.ValueStruct<TValueType>[length << 1];
+                        InterlockedPlus.NoCheckCompareSetSleep0(ref _arrayLock);
+                        Array.Copy(_array, 0, newArray, 0, Count);
                         newArray[Count].Value = value;
-                        array = newArray;
+                        _array = newArray;
                         ++Count;
-                        arrayLock = 0;
+                        _arrayLock = 0;
                     }
-                    finally { Monitor.Exit(newLock); }
+                    finally
+                    {
+                        Monitor.Exit(_newLock);
+                    }
                     return;
                 }
-                Monitor.Exit(newLock);
+                Monitor.Exit(_newLock);
                 goto PUSH;
             }
-            array[Count++].Value = value;
-            arrayLock = 0;
+            _array[Count++].Value = value;
+            _arrayLock = 0;
         }
+
         /// <summary>
-        /// 获取类型对象
+        ///     获取类型对象
         /// </summary>
         /// <returns>类型对象</returns>
-        public valueType Pop()
+        public TValueType Pop()
         {
-            interlocked.NoCheckCompareSetSleep0(ref arrayLock);
+            InterlockedPlus.NoCheckCompareSetSleep0(ref _arrayLock);
             if (Count == 0)
             {
-                arrayLock = 0;
+                _arrayLock = 0;
                 return null;
             }
-            valueType value = array[--Count].Free();
-            arrayLock = 0;
+            var value = _array[--Count].Free();
+            _arrayLock = 0;
             return value;
         }
+
         /// <summary>
-        /// 清除数据集合
+        ///     清除数据集合
         /// </summary>
         /// <param name="count">保留数据数量</param>
         /// <returns>被清除的数据集合</returns>
@@ -113,18 +134,18 @@ namespace TerumoMIS.CoreLibrary
         {
             if (Dispose == null)
             {
-                interlocked.NoCheckCompareSetSleep0(ref arrayLock);
-                int length = Count - count;
+                InterlockedPlus.NoCheckCompareSetSleep0(ref _arrayLock);
+                var length = Count - count;
                 if (length > 0)
                 {
-                    System.Array.Clear(array, count, length);
+                    Array.Clear(_array, count, length);
                     Count = count;
                 }
-                arrayLock = 0;
+                _arrayLock = 0;
             }
             else
             {
-                foreach (IEnumeratorPlus<>.array.value<valueType> value in GetClear(count))
+                foreach (var value in GetClear(count))
                 {
                     try
                     {
@@ -132,59 +153,65 @@ namespace TerumoMIS.CoreLibrary
                     }
                     catch (Exception error)
                     {
-                        log.Default.Add(error, null, false);
+                        LogPlus.Default.Add(error, null, false);
                     }
                 }
             }
         }
+
         /// <summary>
-        /// 清除数据集合
+        ///     清除数据集合
         /// </summary>
         /// <param name="count">保留数据数量</param>
         /// <returns>被清除的数据集合</returns>
-        internal IEnumeratorPlus<>.array.value<valueType>[] GetClear(int count)
+        internal ArrayPlus.ValueStruct<TValueType>[] GetClear(int count)
         {
-            interlocked.NoCheckCompareSetSleep0(ref arrayLock);
-            int length = Count - count;
+            InterlockedPlus.NoCheckCompareSetSleep0(ref _arrayLock);
+            var length = Count - count;
             if (length > 0)
             {
-                IEnumeratorPlus<>.array.value<valueType>[] removeBuffers;
+                ArrayPlus.ValueStruct<TValueType>[] removeBuffers;
                 try
                 {
-                    removeBuffers = new IEnumeratorPlus<>.array.value<valueType>[length];
-                    System.Array.Copy(array, Count = count, removeBuffers, 0, length);
-                    System.Array.Clear(array, count, length);
+                    removeBuffers = new ArrayPlus.ValueStruct<TValueType>[length];
+                    Array.Copy(_array, Count = count, removeBuffers, 0, length);
+                    Array.Clear(_array, count, length);
                 }
-                finally { arrayLock = 0; }
+                finally
+                {
+                    _arrayLock = 0;
+                }
                 return removeBuffers;
             }
-            else arrayLock = 0;
-            return nullValue<IEnumeratorPlus<>.array.value<valueType>>.Array;
+            _arrayLock = 0;
+            return NullValuePlus<ArrayPlus.ValueStruct<TValueType>>.Array;
         }
+
         /// <summary>
-        /// 创建数组池
+        ///     创建数组池
         /// </summary>
         /// <returns>数组池</returns>
-        public static objectPool<valueType> Create()
+        public static ObjectPoolStruct<TValueType> Create()
         {
-            return new objectPool<valueType> { array = new IEnumeratorPlus<>.array.value<valueType>[fastCSharp.config.appSetting.PoolSize], newLock = new object() };
+            return new ObjectPoolStruct<TValueType>
+            {
+                _array = new ArrayPlus.ValueStruct<TValueType>[AppSettingPlus.PoolSize],
+                _newLock = new object()
+            };
         }
+
         /// <summary>
-        /// 创建数组池
+        ///     创建数组池
         /// </summary>
         /// <param name="size">容器初始化大小</param>
         /// <returns></returns>
-        public static objectPool<valueType> Create(int size)
+        public static ObjectPoolStruct<TValueType> Create(int size)
         {
-            return new objectPool<valueType> { array = new IEnumeratorPlus<>.array.value<valueType>[size <= 0 ? fastCSharp.config.appSetting.PoolSize : size], newLock = new object() };
-        }
-        static objectPool()
-        {
-            Type type = typeof(valueType);
-            if (typeof(IDisposable).IsAssignableFrom(type))
+            return new ObjectPoolStruct<TValueType>
             {
-                Dispose = (Action<valueType>)Delegate.CreateDelegate(typeof(Action<valueType>), type.GetMethod("Dispose", BindingFlags.Public | BindingFlags.Instance, null, nullValue<Type>.Array, null));
-            }
+                _array = new ArrayPlus.ValueStruct<TValueType>[size <= 0 ? AppSettingPlus.PoolSize : size],
+                _newLock = new object()
+            };
         }
     }
 }

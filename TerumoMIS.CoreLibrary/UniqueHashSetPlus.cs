@@ -19,53 +19,52 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TerumoMIS.CoreLibrary
 {
     /// <summary>
-    /// 唯一静态哈希
+    ///     唯一静态哈希
     /// </summary>
-    /// <typeparam name="valueType">数据类型</typeparam>
-    public sealed class UniqueHashSetPlus<valueType>
-        where valueType:struct ,IEquatable<valueType>
+    /// <typeparam name="TValueType">数据类型</typeparam>
+    public sealed class UniqueHashSetPlus<TValueType>
+        where TValueType : struct, IEquatable<TValueType>
     {
         /// <summary>
-        /// 哈希数据数组
+        ///     哈希数据数组
         /// </summary>
-        private valueType[] array;
+        private readonly TValueType[] _array;
+
         /// <summary>
-        /// 唯一静态哈希
+        ///     唯一静态哈希
         /// </summary>
         /// <param name="values">数据集合</param>
         /// <param name="size">哈希容器尺寸</param>
-        public unsafe uniqueHashSet(valueType[] values, int size)
+        public unsafe UniqueHashSetPlus(IReadOnlyCollection<TValueType> values, int size)
         {
-            if (values.length() > size || size <= 0) log.Error.Throw(log.exceptionType.IndexOutOfRange);
-            array = new valueType[size];
-            int length = ((size + 31) >> 5) << 2;
+            if (values.Count > size || size <= 0) LogPlus.Error.Throw(LogPlus.ExceptionTypeEnum.IndexOutOfRange);
+            _array = new TValueType[size];
+            var length = ((size + 31) >> 5) << 2;
             byte* isValue = stackalloc byte[length];
-            fixedMap map = new fixedMap(isValue, length, 0);
-            foreach (valueType value in values)
+            var map = new FixedMapStruct(isValue, length);
+            foreach (var value in values)
             {
-                int index = value.GetHashCode();
-                if ((uint)index >= size) log.Error.Throw(log.exceptionType.IndexOutOfRange);
-                if (map.Get(index)) log.Error.Throw(log.exceptionType.ErrorOperation);
+                var index = value.GetHashCode();
+                if ((uint) index >= size) LogPlus.Error.Throw(LogPlus.ExceptionTypeEnum.IndexOutOfRange);
+                if (map.Get(index)) LogPlus.Error.Throw(LogPlus.ExceptionTypeEnum.ErrorOperation);
                 map.Set(index);
-                array[index] = value;
+                _array[index] = value;
             }
         }
+
         /// <summary>
-        /// 判断是否存在某值
+        ///     判断是否存在某值
         /// </summary>
         /// <param name="value">待匹配值</param>
         /// <returns>是否存在某值</returns>
-        public bool Contains(valueType value)
+        public bool Contains(TValueType value)
         {
-            int index = value.GetHashCode();
-            return (uint)index < array.Length && value.Equals(array[index]);
+            var index = value.GetHashCode();
+            return (uint) index < _array.Length && value.Equals(_array[index]);
         }
     }
 }

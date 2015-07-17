@@ -259,7 +259,7 @@
     <Compile Include="StaticDictionaryPlus.cs" />
     <Compile Include="StaticHashIndexPlus.cs" />
     <Compile Include="StaticHashPlus.cs" />
-    <Compile Include="StaticSearcherPlus.cs" />
+    <Compile Include="StateSearcherPlus.cs" />
     <Compile Include="StringBuilderPlus.cs" />
     <Compile Include="StringPlus.cs" />
     <Compile Include="StringPoolPlus.cs" />

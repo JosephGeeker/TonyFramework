@@ -22,19 +22,20 @@ using System;
 namespace TerumoMIS.CoreLibrary.Threading
 {
     /// <summary>
-    /// 回调池
+    ///     回调池
     /// </summary>
     /// <typeparam name="TCallbackType">回调对象类型</typeparam>
     /// <typeparam name="TValueType">回调值类型</typeparam>
-    public abstract class CallBackActionPoolPlus<TCallbackType,TValueType>
-        where TCallbackType:class
+    public abstract class CallBackActionPoolPlus<TCallbackType, TValueType>
+        where TCallbackType : class
     {
         /// <summary>
-        /// 回调委托
+        ///     回调委托
         /// </summary>
         public Action<TValueType> Callback;
+
         /// <summary>
-        /// 添加回调对象
+        ///     添加回调对象
         /// </summary>
         /// <param name="poolCallback">回调对象</param>
         /// <param name="value">回调值</param>
@@ -61,8 +62,9 @@ namespace TerumoMIS.CoreLibrary.Threading
                 }
             }
         }
+
         /// <summary>
-        /// 回调处理
+        ///     回调处理
         /// </summary>
         /// <param name="value">回调值</param>
         protected void OnlyCallback(TValueType value)

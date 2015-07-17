@@ -17,81 +17,84 @@
 //  CLRVersion : 4.0.30319.18408
 //==============================================================
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace TerumoMIS.CoreLibrary.Web
 {
     /// <summary>
-    /// Get或Post查询字符串相关操作
+    ///     Get或Post查询字符串相关操作
     /// </summary>
     public static class FormQueryPlus
     {
         /// <summary>
-        /// 模拟javascript编码函数escape
+        ///     模拟javascript编码函数escape
         /// </summary>
         /// <param name="value">原字符串</param>
         /// <returns>escape编码后的字符串</returns>
         public static unsafe string JavascriptEscape(string value)
         {
-            if (value.length() != 0)
+            if (value.Length != 0)
             {
                 fixed (char* valueFixed = value)
                 {
-                    char* end = valueFixed + value.Length;
-                    int length = 0;
-                    for (char* start = valueFixed; start != end; ++start)
+                    var end = valueFixed + value.Length;
+                    var length = 0;
+                    for (var start = valueFixed; start != end; ++start)
                     {
                         if ((*start & 0xff00) == 0)
                         {
-                            if ((uint)(*start - '0') >= 10 && (uint)((*start | 0x20) - 'a') >= 26) length += 2;
+                            if ((uint) (*start - '0') >= 10 && (uint) ((*start | 0x20) - 'a') >= 26) length += 2;
                         }
                         else length += 5;
                     }
                     if (length != 0)
                     {
-                        string newValue = fastCSharp.String.FastAllocateString(length += value.Length);
+                        var newValue = StringPlus.FastAllocateString(length + value.Length);
                         fixed (char* newValueFixed = newValue)
                         {
-                            byte* write = (byte*)newValueFixed;
-                            for (char* start = valueFixed; start != end; ++start)
+                            var write = (byte*) newValueFixed;
+                            for (var start = valueFixed; start != end; ++start)
                             {
                                 uint charValue = *start;
                                 if ((charValue & 0xff00) == 0)
                                 {
-                                    if ((uint)(charValue - '0') < 10 || (uint)((charValue | 0x20) - 'a') < 26)
+                                    if (charValue - '0' < 10 || (charValue | 0x20) - 'a' < 26)
                                     {
-                                        *(char*)write = (char)charValue;
-                                        write += sizeof(char);
+                                        *(char*) write = (char) charValue;
+                                        write += sizeof (char);
                                     }
                                     else
                                     {
-                                        uint code = charValue >> 4;
-                                        *(char*)write = '%';
-                                        code += code < 10 ? (uint)'0' : (uint)('0' + 'A' - '9' - 1);
-                                        write += sizeof(char);
+                                        var code = charValue >> 4;
+                                        *(char*) write = '%';
+                                        code += code < 10 ? '0' : (uint) ('0' + 'A' - '9' - 1);
+                                        write += sizeof (char);
                                         code += (charValue << 16) & 0xf0000;
-                                        *(uint*)write = code + (code < 0xa0000 ? (uint)'0' << 16 : ((uint)('0' + 'A' - '9' - 1) << 16));
-                                        write += sizeof(uint);
+                                        *(uint*) write = code +
+                                                         (code < 0xa0000
+                                                             ? (uint) '0' << 16
+                                                             : ((uint) ('0' + 'A' - '9' - 1) << 16));
+                                        write += sizeof (uint);
                                     }
                                 }
                                 else
                                 {
-                                    uint code = charValue >> 12;
-                                    *(int*)write = '%' + ('u' << 16);
-                                    code += code < 10 ? (uint)'0' : (uint)('0' + 'A' - '9' - 1);
-                                    write += sizeof(int);
+                                    var code = charValue >> 12;
+                                    *(int*) write = '%' + ('u' << 16);
+                                    code += code < 10 ? '0' : (uint) ('0' + 'A' - '9' - 1);
+                                    write += sizeof (int);
                                     code += (charValue & 0xf00) << 8;
-                                    *(uint*)write = code + (code < 0xa0000 ? (uint)'0' << 16 : ((uint)('0' + 'A' - '9' - 1) << 16));
+                                    *(uint*) write = code +
+                                                     (code < 0xa0000
+                                                         ? (uint) '0' << 16
+                                                         : ((uint) ('0' + 'A' - '9' - 1) << 16));
                                     code = (charValue >> 4) & 0xf;
-                                    write += sizeof(uint);
-                                    code += code < 10 ? (uint)'0' : (uint)('0' + 'A' - '9' - 1);
+                                    write += sizeof (uint);
+                                    code += code < 10 ? '0' : (uint) ('0' + 'A' - '9' - 1);
                                     code += (charValue << 16) & 0xf0000;
-                                    *(uint*)write = code + (code < 0xa0000 ? (uint)'0' << 16 : ((uint)('0' + 'A' - '9' - 1) << 16));
-                                    write += sizeof(uint);
+                                    *(uint*) write = code +
+                                                     (code < 0xa0000
+                                                         ? (uint) '0' << 16
+                                                         : ((uint) ('0' + 'A' - '9' - 1) << 16));
+                                    write += sizeof (uint);
                                 }
                             }
                         }
@@ -101,6 +104,7 @@ namespace TerumoMIS.CoreLibrary.Web
             }
             return value;
         }
+
         ///// <summary>
         ///// 模拟javascript解码函数unescape
         ///// </summary>
@@ -151,15 +155,15 @@ namespace TerumoMIS.CoreLibrary.Web
         //    return value;
         //}
         /// <summary>
-        /// 模拟javascript解码函数unescape
+        ///     模拟javascript解码函数unescape
         /// </summary>
         /// <param name="value">原字符串</param>
         /// <returns>unescape解码后的字符串</returns>
-        internal static unsafe subString JavascriptUnescape(subString value)
+        internal static unsafe SubStringStruct JavascriptUnescape(SubStringStruct value)
         {
             if (value.Length != 0)
             {
-                fixed (char* valueFixed = value.value)
+                fixed (char* valueFixed = value.Value)
                 {
                     char* start = valueFixed + value.StartIndex, end = start + value.Length;
                     while (start != end && *start != '%')
@@ -169,55 +173,67 @@ namespace TerumoMIS.CoreLibrary.Web
                     }
                     if (start != end)
                     {
-                        char* write = start;
+                        var write = start;
                         do
                         {
                             if (*++start == 'u')
                             {
-                                uint code = (uint)(*++start - '0' < 10 ? *start - '0' : ((*start & 0xdf) - ('0' + 'A' - '9' - 1)));
+                                var code =
+                                    (uint)
+                                        (*++start - '0' < 10 ? *start - '0' : ((*start & 0xdf) - ('0' + 'A' - '9' - 1)));
                                 code <<= 4;
-                                code += (uint)(*++start - '0' < 10 ? *start - '0' : ((*start & 0xdf) - ('0' + 'A' - '9' - 1)));
+                                code +=
+                                    (uint)
+                                        (*++start - '0' < 10 ? *start - '0' : ((*start & 0xdf) - ('0' + 'A' - '9' - 1)));
                                 code <<= 4;
-                                code += (uint)(*++start - '0' < 10 ? *start - '0' : ((*start & 0xdf) - ('0' + 'A' - '9' - 1)));
+                                code +=
+                                    (uint)
+                                        (*++start - '0' < 10 ? *start - '0' : ((*start & 0xdf) - ('0' + 'A' - '9' - 1)));
                                 code <<= 4;
-                                code += (uint)(*++start - '0' < 10 ? *start - '0' : ((*start & 0xdf) - ('0' + 'A' - '9' - 1)));
-                                *write++ = code != 0 ? (char)code : ' ';
+                                code +=
+                                    (uint)
+                                        (*++start - '0' < 10 ? *start - '0' : ((*start & 0xdf) - ('0' + 'A' - '9' - 1)));
+                                *write++ = code != 0 ? (char) code : ' ';
                             }
                             else
                             {
-                                uint code = (uint)(*start - '0' < 10 ? *start - '0' : ((*start & 0xdf) - ('0' + 'A' - '9' - 1)));
+                                var code =
+                                    (uint)
+                                        (*start - '0' < 10 ? *start - '0' : ((*start & 0xdf) - ('0' + 'A' - '9' - 1)));
                                 code <<= 4;
-                                code += (uint)(*++start - '0' < 10 ? *start - '0' : ((*start & 0xdf) - ('0' + 'A' - '9' - 1)));
-                                *write++ = code != 0 ? (char)code : ' ';
+                                code +=
+                                    (uint)
+                                        (*++start - '0' < 10 ? *start - '0' : ((*start & 0xdf) - ('0' + 'A' - '9' - 1)));
+                                *write++ = code != 0 ? (char) code : ' ';
                             }
                             while (++start < end && *start != '%') *write++ = *start != 0 ? *start : ' ';
-                        }
-                        while (start < end);
-                        return subString.Unsafe(value.value, value.StartIndex, (int)(write - valueFixed) - value.StartIndex);
+                        } while (start < end);
+                        return SubStringStruct.Unsafe(value.Value, value.StartIndex,
+                            (int) (write - valueFixed) - value.StartIndex);
                     }
                 }
             }
             return value;
         }
+
         /// <summary>
-        /// 模拟javascript解码函数unescape
+        ///     模拟javascript解码函数unescape
         /// </summary>
         /// <param name="value">原字符串</param>
-        /// <param name="endLength">附加长度</param>
         /// <returns>unescape解码后的字符串</returns>
-        internal static unsafe subString JavascriptUnescape(subArray<byte> value)
+        internal static unsafe SubStringStruct JavascriptUnescape(SubArrayStruct<byte> value)
         {
             if (value.Count != 0)
             {
-                string newValue = fastCSharp.String.FastAllocateString(value.Count);
+                var newValue = StringPlus.FastAllocateString(value.Count);
                 fixed (char* newValueFixed = newValue)
                 fixed (byte* valueFixed = value.Array)
                 {
                     byte* start = valueFixed + value.StartIndex, end = start + value.Count;
-                    char* write = newValueFixed;
+                    var write = newValueFixed;
                     while (start != end && *start != '%')
                     {
-                        *write++ = *start == 0 ? ' ' : (char)*start;
+                        *write++ = *start == 0 ? ' ' : (char) *start;
                         ++start;
                     }
                     if (start != end)
@@ -226,33 +242,33 @@ namespace TerumoMIS.CoreLibrary.Web
                         {
                             if (*++start == 'u')
                             {
-                                uint code = (uint)(*++start - '0'), number = (uint)(*++start - '0');
+                                uint code = (uint) (*++start - '0'), number = (uint) (*++start - '0');
                                 if (code > 9) code = ((code - ('A' - '0')) & 0xffdfU) + 10;
                                 if (number > 9) number = ((number - ('A' - '0')) & 0xffdfU) + 10;
                                 code <<= 12;
                                 code += (number << 8);
-                                if ((number = (uint)(*++start - '0')) > 9) number = ((number - ('A' - '0')) & 0xffdfU) + 10;
+                                if ((number = (uint) (*++start - '0')) > 9)
+                                    number = ((number - ('A' - '0')) & 0xffdfU) + 10;
                                 code += (number << 4);
-                                number = (uint)(*++start - '0');
+                                number = (uint) (*++start - '0');
                                 code += (number > 9 ? (((number - ('A' - '0')) & 0xffdfU) + 10) : number);
-                                *write++ = code == 0 ? ' ' : (char)code;
+                                *write++ = code == 0 ? ' ' : (char) code;
                             }
                             else
                             {
-                                uint code = (uint)(*start - '0'), number = (uint)(*++start - '0');
+                                uint code = (uint) (*start - '0'), number = (uint) (*++start - '0');
                                 if (code > 9) code = ((code - ('A' - '0')) & 0xffdfU) + 10;
                                 code = (number > 9 ? (((number - ('A' - '0')) & 0xffdfU) + 10) : number) + (code << 4);
-                                *write++ = code == 0 ? ' ' : (char)code;
+                                *write++ = code == 0 ? ' ' : (char) code;
                             }
-                            while (++start < end && *start != '%') *write++ = *start == 0 ? ' ' : (char)*start;
-                        }
-                        while (start < end);
-                        return subString.Unsafe(newValue, 0, (int)(write - newValueFixed));
+                            while (++start < end && *start != '%') *write++ = *start == 0 ? ' ' : (char) *start;
+                        } while (start < end);
+                        return SubStringStruct.Unsafe(newValue, 0, (int) (write - newValueFixed));
                     }
-                    return subString.Unsafe(newValue, 0, value.Count);
+                    return SubStringStruct.Unsafe(newValue, 0, value.Count);
                 }
             }
-            return default(subString);
+            return default(SubStringStruct);
         }
     }
 }

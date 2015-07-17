@@ -19,65 +19,131 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Threading;
+using ThreadState = System.Threading.ThreadState;
 
 namespace TerumoMIS.CoreLibrary.Threading
 {
     /// <summary>
-    /// 线程池线程
+    ///     线程池线程
     /// </summary>
     internal sealed class ThreadPlus
     {
         /// <summary>
-        /// 线程池线程集合
+        ///     线程池线程集合
         /// </summary>
-        private static readonly HashSet<Thread> threads = hashSet.CreateOnly<Thread>();
+        private static readonly HashSet<Thread> Threads = HashSetPlus.CreateOnly<Thread>();
+
         /// <summary>
-        /// 线程池线程集合访问锁
+        ///     线程池线程集合访问锁
         /// </summary>
-        private static int threadLock;
+        private static int _threadLock;
+
         /// <summary>
-        /// 线程池线程默认堆栈帧数
+        ///     线程池线程默认堆栈帧数
         /// </summary>
-        private static int defaultFrameCount;
+        private static int _defaultFrameCount;
+
         /// <summary>
-        /// 活动的线程池线程集合
+        ///     线程句柄
         /// </summary>
-        public static subArray<StackTrace> StackTraces
+        private readonly Thread _threadHandle;
+
+        /// <summary>
+        ///     线程池
+        /// </summary>
+        private readonly ThreadPoolPlus _threadPool;
+
+        /// <summary>
+        ///     等待事件
+        /// </summary>
+        private readonly EventWaitHandle _waitHandle;
+
+        /// <summary>
+        ///     应用程序退出处理
+        /// </summary>
+        private Action _domainUnload;
+
+        /// <summary>
+        ///     应用程序退出处理
+        /// </summary>
+        private Action<Exception> _onError;
+
+        /// <summary>
+        ///     任务委托
+        /// </summary>
+        private Action _task;
+
+        /// <summary>
+        ///     线程池线程
+        /// </summary>
+        /// <param name="threadPool">线程池</param>
+        /// <param name="stackSize">堆栈大小</param>
+        /// <param name="task">任务委托</param>
+        /// <param name="domainUnload">应用程序退出处理</param>
+        /// <param name="onError">应用程序退出处理</param>
+        internal ThreadPlus(ThreadPoolPlus threadPool, int stackSize, Action task, Action domainUnload,
+            Action<Exception> onError)
+        {
+            _task = task;
+            _domainUnload = domainUnload;
+            _onError = onError;
+            _waitHandle = new EventWaitHandle(false, EventResetMode.AutoReset, null);
+            _threadPool = threadPool;
+            _threadHandle = new Thread(Run, stackSize);
+            _threadHandle.IsBackground = true;
+            InterlockedPlus.NoCheckCompareSetSleep0(ref _threadLock);
+            try
+            {
+                Threads.Add(_threadHandle);
+            }
+            finally
+            {
+                _threadLock = 0;
+                _threadHandle.Start();
+            }
+        }
+
+        /// <summary>
+        ///     活动的线程池线程集合
+        /// </summary>
+        public static SubArrayStruct<StackTrace> StackTraces
         {
             get
             {
                 Thread[] array;
-                interlocked.NoCheckCompareSetSleep0(ref threadLock);
+                InterlockedPlus.NoCheckCompareSetSleep0(ref _threadLock);
                 try
                 {
-                    array = threads.getArray();
+                    array = Threads.getArray();
                 }
-                finally { threadLock = 0; }
-                subArray<StackTrace> stacks = new subArray<StackTrace>();
-                int currentId = Thread.CurrentThread.ManagedThreadId;
-                foreach (Thread thread in array)
+                finally
+                {
+                    _threadLock = 0;
+                }
+                var stacks = new SubArrayStruct<StackTrace>();
+                var currentId = Thread.CurrentThread.ManagedThreadId;
+                foreach (var thread in array)
                 {
                     if (thread.ManagedThreadId != currentId)
                     {
-                        bool isSuspend = false;
+                        var isSuspend = false;
                         try
                         {
-                            if ((thread.ThreadState | System.Threading.ThreadState.Suspended) != 0)
+                            if ((thread.ThreadState | ThreadState.Suspended) != 0)
                             {
 #pragma warning disable 618
                                 thread.Suspend();
 #pragma warning restore 618
                                 isSuspend = true;
                             }
-                            StackTrace stack = new StackTrace(thread, true);
-                            if (stack.FrameCount != defaultFrameCount) stacks.Add(stack);
+                            var stack = new StackTrace(thread, true);
+                            if (stack.FrameCount != _defaultFrameCount) stacks.Add(stack);
                         }
                         catch (Exception error)
                         {
-                            log.Default.Add(error, null, false);
+                            LogPlus.Default.Add(error, null, false);
                         }
                         finally
                         {
@@ -90,137 +156,90 @@ namespace TerumoMIS.CoreLibrary.Threading
                 return stacks;
             }
         }
+
         /// <summary>
-        /// 线程池
-        /// </summary>
-        private readonly threadPool threadPool;
-        /// <summary>
-        /// 线程句柄
-        /// </summary>
-        private readonly Thread threadHandle;
-        /// <summary>
-        /// 等待事件
-        /// </summary>
-        private readonly EventWaitHandle waitHandle;
-        /// <summary>
-        /// 线程ID
+        ///     线程ID
         /// </summary>
         public int ManagedThreadId
         {
-            get { return threadHandle.ManagedThreadId; }
+            get { return _threadHandle.ManagedThreadId; }
         }
+
         /// <summary>
-        /// 任务委托
+        ///     运行线程
         /// </summary>
-        private Action task;
-        /// <summary>
-        /// 应用程序退出处理
-        /// </summary>
-        private Action domainUnload;
-        /// <summary>
-        /// 应用程序退出处理
-        /// </summary>
-        private Action<Exception> onError;
-        /// <summary>
-        /// 线程池线程
-        /// </summary>
-        /// <param name="threadPool">线程池</param>
-        /// <param name="stackSize">堆栈大小</param>
-        /// <param name="handle">任务委托</param>
-        /// <param name="domainUnload">应用程序退出处理</param>
-        /// <param name="onError">应用程序退出处理</param>
-        internal thread(threadPool threadPool, int stackSize, Action task, Action domainUnload, Action<Exception> onError)
+        private void Run()
         {
-            this.task = task;
-            this.domainUnload = domainUnload;
-            this.onError = onError;
-            waitHandle = new EventWaitHandle(false, EventResetMode.AutoReset, null);
-            this.threadPool = threadPool;
-            threadHandle = new Thread(run, stackSize);
-            threadHandle.IsBackground = true;
-            interlocked.NoCheckCompareSetSleep0(ref threadLock);
-            try
-            {
-                threads.Add(threadHandle);
-            }
-            finally
-            {
-                threadLock = 0;
-                threadHandle.Start();
-            }
-        }
-        /// <summary>
-        /// 运行线程
-        /// </summary>
-        private void run()
-        {
-            if (defaultFrameCount == 0) defaultFrameCount = new System.Diagnostics.StackTrace(threadHandle, false).FrameCount;
+#pragma warning disable 618
+            if (_defaultFrameCount == 0) _defaultFrameCount = new StackTrace(_threadHandle, false).FrameCount;
+#pragma warning restore 618
             do
             {
-                if (domainUnload != null) fastCSharp.domainUnload.Add(domainUnload);
+                if (_domainUnload != null) DomainUnloadPlus.Add(_domainUnload);
                 try
                 {
-                    task();
+                    _task();
                 }
                 catch (Exception error)
                 {
-                    if (onError != null)
+                    if (_onError != null)
                     {
                         try
                         {
-                            onError(error);
+                            _onError(error);
                         }
                         catch (Exception error1)
                         {
-                            log.Error.Add(error1, null, false);
+                            LogPlus.Error.Add(error1, null, false);
                         }
                     }
-                    else log.Error.Add(error, null, false);
+                    else LogPlus.Error.Add(error, null, false);
                 }
                 finally
                 {
-                    task = null;
-                    onError = null;
-                    if (domainUnload != null)
+                    _task = null;
+                    _onError = null;
+                    if (_domainUnload != null)
                     {
-                        fastCSharp.domainUnload.Remove(domainUnload, false);
-                        domainUnload = null;
+                        DomainUnloadPlus.Remove(_domainUnload, false);
+                        _domainUnload = null;
                     }
                 }
-                threadPool.Push(this);
-                waitHandle.WaitOne();
-            }
-            while (task != null);
-            interlocked.NoCheckCompareSetSleep0(ref threadLock);
+                _threadPool.Push(this);
+                _waitHandle.WaitOne();
+            } while (_task != null);
+            InterlockedPlus.NoCheckCompareSetSleep0(ref _threadLock);
             try
             {
-                threads.Remove(threadHandle);
+                Threads.Remove(_threadHandle);
             }
             finally
             {
-                threadLock = 0;
-                waitHandle.Close();
+                _threadLock = 0;
+                _waitHandle.Close();
             }
         }
+
         /// <summary>
-        /// 结束线程
+        ///     结束线程
         /// </summary>
         internal void Stop()
         {
-            waitHandle.Set();
+            _waitHandle.Set();
         }
+
         /// <summary>
-        /// 执行任务
+        ///     执行任务
         /// </summary>
-        /// <param name="handle">任务委托</param>
+        /// <param name="task">任务委托</param>
         /// <param name="domainUnload">应用程序退出处理</param>
         /// <param name="onError">应用程序退出处理</param>
         internal void RunTask(Action task, Action domainUnload, Action<Exception> onError)
         {
-            this.domainUnload = domainUnload;
-            this.onError = onError;
-            this.task = task;
-            waitHandle.Set();
+            _domainUnload = domainUnload;
+            _onError = onError;
+            _task = task;
+            _waitHandle.Set();
         }
     }
 }

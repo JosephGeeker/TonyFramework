@@ -18,38 +18,45 @@
 //==============================================================
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TerumoMIS.CoreLibrary.Web
 {
     /// <summary>
-    /// 下载文件类型属性
+    ///     下载文件类型属性
     /// </summary>
-    public sealed class contentTypeInfo : Attribute
+    public sealed class ContentTypeInfoPlus : Attribute
     {
         /// <summary>
-        /// 扩展名关联下载文件类型
+        ///     扩展名关联下载文件类型
         /// </summary>
-        private static readonly stateSearcher.ascii<byte[]> contentTypes;
+        private static readonly StateSearcherPlus<byte[]> contentTypes;
+
         /// <summary>
-        /// 未知扩展名关联下载文件类型
+        ///     未知扩展名关联下载文件类型
         /// </summary>
         private static readonly byte[] unknownContentType;
+
         /// <summary>
-        /// 文件扩展名
+        ///     文件扩展名
         /// </summary>
         public string ExtensionName;
+
         /// <summary>
-        /// 下载文件类型名称
+        ///     下载文件类型名称
         /// </summary>
         public string Name;
 
+        static ContentTypeInfoPlus()
+        {
+            ContentTypeInfoPlus[] types = Enum.GetValues(typeof (ContentTypeEnum))
+                .ToArray<ContentTypeEnum>().GetArray(value => EnumPlus<contentType, ContentTypeInfoPlus>.Array(value));
+            contentTypes = new StateSearcherPlus.ascii<byte[]>(types.getArray(value => value.ExtensionName),
+                types.getArray(value => value.Name.getBytes()));
+            unknownContentType = contentTypes.Get("*");
+        }
 
         /// <summary>
-        /// 获取扩展名关联下载文件类型
+        ///     获取扩展名关联下载文件类型
         /// </summary>
         /// <param name="extensionName">扩展名</param>
         /// <returns>扩展名关联下载文件类型</returns>
@@ -57,456 +64,231 @@ namespace TerumoMIS.CoreLibrary.Web
         {
             return contentTypes.Get(extensionName, unknownContentType);
         }
-        static contentTypeInfo()
-        {
-            contentTypeInfo[] types = System.Enum.GetValues(typeof(contentType))
-                .toArray<contentType>().getArray(value => fastCSharp.Enum<contentType, contentTypeInfo>.Array(value));
-            contentTypes = new stateSearcher.ascii<byte[]>(types.getArray(value => value.ExtensionName), types.getArray(value => value.Name.getBytes()));
-            unknownContentType = contentTypes.Get("*");
-        }
     }
+
     /// <summary>
-    /// 下载文件类型
+    ///     下载文件类型
     /// </summary>
-    public enum contentType
+    public enum ContentTypeEnum
     {
-        [contentTypeInfo(ExtensionName = "*", Name = "application/octet-stream")]
-        _,
-        [contentTypeInfo(ExtensionName = "323", Name = "text/h323")]
-        _323,
-        [contentTypeInfo(ExtensionName = "907", Name = "drawing/907")]
-        _907,
-        [contentTypeInfo(ExtensionName = "acp", Name = "audio/x-mei-aac")]
-        acp,
-        [contentTypeInfo(ExtensionName = "ai", Name = "application/postscript")]
-        ai,
-        [contentTypeInfo(ExtensionName = "aif", Name = "audio/aiff")]
-        aif,
-        [contentTypeInfo(ExtensionName = "aifc", Name = "audio/aiff")]
-        aifc,
-        [contentTypeInfo(ExtensionName = "aiff", Name = "audio/aiff")]
-        aiff,
-        [contentTypeInfo(ExtensionName = "asa", Name = "text/asa")]
-        asa,
-        [contentTypeInfo(ExtensionName = "asf", Name = "video/x-ms-asf")]
-        asf,
-        [contentTypeInfo(ExtensionName = "asp", Name = "text/asp")]
-        asp,
-        [contentTypeInfo(ExtensionName = "asx", Name = "video/x-ms-asf")]
-        asx,
-        [contentTypeInfo(ExtensionName = "au", Name = "audio/basic")]
-        au,
-        [contentTypeInfo(ExtensionName = "avi", Name = "video/avi")]
-        avi,
-        [contentTypeInfo(ExtensionName = "awf", Name = "application/vnd.adobe.workflow")]
-        awf,
-        [contentTypeInfo(ExtensionName = "biz", Name = "text/xml")]
-        biz,
-        [contentTypeInfo(ExtensionName = "bmp", Name = "image/msbitmap")]
-        bmp,
-        [contentTypeInfo(ExtensionName = "cat", Name = "application/vnd.ms-pki.seccat")]
-        cat,
-        [contentTypeInfo(ExtensionName = "cdf", Name = "application/x-netcdf")]
-        cdf,
-        [contentTypeInfo(ExtensionName = "cer", Name = "application/x-x509-ca-cert")]
-        cer,
-        [contentTypeInfo(ExtensionName = "class", Name = "java/*")]
-        _class,
-        [contentTypeInfo(ExtensionName = "cml", Name = "text/xml")]
-        cml,
-        [contentTypeInfo(ExtensionName = "crl", Name = "application/pkix-crl")]
-        crl,
-        [contentTypeInfo(ExtensionName = "crt", Name = "application/x-x509-ca-cert")]
-        crt,
-        [contentTypeInfo(ExtensionName = "css", Name = "text/css")]
-        css,
-        [contentTypeInfo(ExtensionName = "cur", Name = "image/x-icon")]
-        cur,
-        [contentTypeInfo(ExtensionName = "dcd", Name = "text/xml")]
-        dcd,
-        [contentTypeInfo(ExtensionName = "der", Name = "application/x-x509-ca-cert")]
-        der,
-        [contentTypeInfo(ExtensionName = "dll", Name = "application/x-msdownload")]
-        dll,
-        [contentTypeInfo(ExtensionName = "doc", Name = "application/msword")]
-        doc,
-        [contentTypeInfo(ExtensionName = "dot", Name = "application/msword")]
-        dot,
-        [contentTypeInfo(ExtensionName = "dtd", Name = "text/xml")]
-        dtd,
-        [contentTypeInfo(ExtensionName = "edn", Name = "application/vnd.adobe.edn")]
-        edn,
-        [contentTypeInfo(ExtensionName = "eml", Name = "message/rfc822")]
-        eml,
-        [contentTypeInfo(ExtensionName = "ent", Name = "text/xml")]
-        ent,
-        [contentTypeInfo(ExtensionName = "eps", Name = "application/postscript")]
-        eps,
-        [contentTypeInfo(ExtensionName = "exe", Name = "application/x-msdownload")]
-        exe,
-        [contentTypeInfo(ExtensionName = "fax", Name = "image/fax")]
-        fax,
-        [contentTypeInfo(ExtensionName = "fdf", Name = "application/vnd.fdf")]
-        fdf,
-        [contentTypeInfo(ExtensionName = "fif", Name = "application/fractals")]
-        fif,
-        [contentTypeInfo(ExtensionName = "fo", Name = "text/xml")]
-        fo,
-        [contentTypeInfo(ExtensionName = "gif", Name = "image/gif")]
-        gif,
-        [contentTypeInfo(ExtensionName = "hpg", Name = "application/x-hpgl")]
-        hpg,
-        [contentTypeInfo(ExtensionName = "hqx", Name = "application/mac-binhex40")]
-        hqx,
-        [contentTypeInfo(ExtensionName = "hta", Name = "application/hta")]
-        hta,
-        [contentTypeInfo(ExtensionName = "htc", Name = "text/x-component")]
-        htc,
-        [contentTypeInfo(ExtensionName = "htm", Name = "text/html")]
-        htm,
-        [contentTypeInfo(ExtensionName = "html", Name = "text/html")]
-        html,
-        [contentTypeInfo(ExtensionName = "htt", Name = "text/webviewhtml")]
-        htt,
-        [contentTypeInfo(ExtensionName = "htx", Name = "text/html")]
-        htx,
-        [contentTypeInfo(ExtensionName = "ico", Name = "image/x-icon")]
-        ico,
-        [contentTypeInfo(ExtensionName = "iii", Name = "application/x-iphone")]
-        iii,
-        [contentTypeInfo(ExtensionName = "img", Name = "application/x-img")]
-        img,
-        [contentTypeInfo(ExtensionName = "ins", Name = "application/x-internet-signup")]
-        ins,
-        [contentTypeInfo(ExtensionName = "isp", Name = "application/x-internet-signup")]
-        isp,
-        [contentTypeInfo(ExtensionName = "java", Name = "java/*")]
-        java,
-        [contentTypeInfo(ExtensionName = "jfif", Name = "image/jpeg")]
-        jfif,
-        [contentTypeInfo(ExtensionName = "jpe", Name = "image/jpeg")]
-        jpe,
-        [contentTypeInfo(ExtensionName = "jpeg", Name = "image/jpeg")]
-        jpeg,
-        [contentTypeInfo(ExtensionName = "jpg", Name = "image/jpeg")]
-        jpg,
-        [contentTypeInfo(ExtensionName = "js", Name = "application/x-javascript")]
-        js,
-        [contentTypeInfo(ExtensionName = "jsp", Name = "text/html")]
-        jsp,
-        [contentTypeInfo(ExtensionName = "la1", Name = "audio/x-liquid-file")]
-        la1,
-        [contentTypeInfo(ExtensionName = "lar", Name = "application/x-laplayer-reg")]
-        lar,
-        [contentTypeInfo(ExtensionName = "latex", Name = "application/x-latex")]
-        latex,
-        [contentTypeInfo(ExtensionName = "lavs", Name = "audio/x-liquid-secure")]
-        lavs,
-        [contentTypeInfo(ExtensionName = "lmsff", Name = "audio/x-la-lms")]
-        lmsff,
-        [contentTypeInfo(ExtensionName = "ls", Name = "application/x-javascript")]
-        ls,
-        [contentTypeInfo(ExtensionName = "m1v", Name = "video/x-mpeg")]
-        m1v,
-        [contentTypeInfo(ExtensionName = "m2v", Name = "video/x-mpeg")]
-        m2v,
-        [contentTypeInfo(ExtensionName = "m3u", Name = "audio/mpegurl")]
-        m3u,
-        [contentTypeInfo(ExtensionName = "m4e", Name = "video/mpeg4")]
-        m4e,
-        [contentTypeInfo(ExtensionName = "man", Name = "application/x-troff-man")]
-        man,
-        [contentTypeInfo(ExtensionName = "math", Name = "text/xml")]
-        math,
-        [contentTypeInfo(ExtensionName = "mdb", Name = "application/msaccess")]
-        mdb,
-        [contentTypeInfo(ExtensionName = "mfp", Name = "application/x-shockwave-flash")]
-        mfp,
-        [contentTypeInfo(ExtensionName = "mht", Name = "message/rfc822")]
-        mht,
-        [contentTypeInfo(ExtensionName = "mhtml", Name = "message/rfc822")]
-        mhtml,
-        [contentTypeInfo(ExtensionName = "mid", Name = "audio/mid")]
-        mid,
-        [contentTypeInfo(ExtensionName = "midi", Name = "audio/mid")]
-        midi,
-        [contentTypeInfo(ExtensionName = "mml", Name = "text/xml")]
-        mml,
-        [contentTypeInfo(ExtensionName = "mnd", Name = "audio/x-musicnet-download")]
-        mnd,
-        [contentTypeInfo(ExtensionName = "mns", Name = "audio/x-musicnet-stream")]
-        mns,
-        [contentTypeInfo(ExtensionName = "mocha", Name = "application/x-javascript")]
-        mocha,
-        [contentTypeInfo(ExtensionName = "movie", Name = "video/x-sgi-movie")]
-        movie,
-        [contentTypeInfo(ExtensionName = "mp1", Name = "audio/mp1")]
-        mp1,
-        [contentTypeInfo(ExtensionName = "mp2", Name = "audio/mp2")]
-        mp2,
-        [contentTypeInfo(ExtensionName = "mp2v", Name = "video/mpeg")]
-        mp2v,
-        [contentTypeInfo(ExtensionName = "mp3", Name = "audio/mp3")]
-        mp3,
-        [contentTypeInfo(ExtensionName = "mp4", Name = "video/mpeg4")]
-        mp4,
-        [contentTypeInfo(ExtensionName = "mpa", Name = "video/x-mpg")]
-        mpa,
-        [contentTypeInfo(ExtensionName = "mpd", Name = "application/vnd.ms-project")]
-        mpd,
-        [contentTypeInfo(ExtensionName = "mpe", Name = "video/x-mpeg")]
-        mpe,
-        [contentTypeInfo(ExtensionName = "mpeg", Name = "video/mpg")]
-        mpeg,
-        [contentTypeInfo(ExtensionName = "mpg", Name = "video/mpg")]
-        mpg,
-        [contentTypeInfo(ExtensionName = "mpga", Name = "audio/rn-mpeg")]
-        mpga,
-        [contentTypeInfo(ExtensionName = "mpp", Name = "application/vnd.ms-project")]
-        mpp,
-        [contentTypeInfo(ExtensionName = "mps", Name = "video/x-mpeg")]
-        mps,
-        [contentTypeInfo(ExtensionName = "mpt", Name = "application/vnd.ms-project")]
-        mpt,
-        [contentTypeInfo(ExtensionName = "mpv", Name = "video/mpg")]
-        mpv,
-        [contentTypeInfo(ExtensionName = "mpv2", Name = "video/mpeg")]
-        mpv2,
-        [contentTypeInfo(ExtensionName = "mpw", Name = "application/vnd.ms-project")]
-        mpw,
-        [contentTypeInfo(ExtensionName = "mpx", Name = "application/vnd.ms-project")]
-        mpx,
-        [contentTypeInfo(ExtensionName = "mtx", Name = "text/xml")]
-        mtx,
-        [contentTypeInfo(ExtensionName = "mxp", Name = "application/x-mmxp")]
-        mxp,
-        [contentTypeInfo(ExtensionName = "net", Name = "image/pnetvue")]
-        net,
-        [contentTypeInfo(ExtensionName = "nws", Name = "message/rfc822")]
-        nws,
-        [contentTypeInfo(ExtensionName = "odc", Name = "text/x-ms-odc")]
-        odc,
-        [contentTypeInfo(ExtensionName = "p10", Name = "application/pkcs10")]
-        p10,
-        [contentTypeInfo(ExtensionName = "p12", Name = "application/x-pkcs12")]
-        p12,
-        [contentTypeInfo(ExtensionName = "p7b", Name = "application/x-pkcs7-certificates")]
-        p7b,
-        [contentTypeInfo(ExtensionName = "p7c", Name = "application/pkcs7-mime")]
-        p7c,
-        [contentTypeInfo(ExtensionName = "p7m", Name = "application/pkcs7-mime")]
-        p7m,
-        [contentTypeInfo(ExtensionName = "p7r", Name = "application/x-pkcs7-certreqresp")]
-        p7r,
-        [contentTypeInfo(ExtensionName = "p7s", Name = "application/pkcs7-signature")]
-        p7s,
-        [contentTypeInfo(ExtensionName = "pcx", Name = "image/x-pcx")]
-        pcx,
-        [contentTypeInfo(ExtensionName = "pdf", Name = "application/pdf")]
-        pdf,
-        [contentTypeInfo(ExtensionName = "pdx", Name = "application/vnd.adobe.pdx")]
-        pdx,
-        [contentTypeInfo(ExtensionName = "pfx", Name = "application/x-pkcs12")]
-        pfx,
-        [contentTypeInfo(ExtensionName = "pic", Name = "application/x-pic")]
-        pic,
-        [contentTypeInfo(ExtensionName = "pko", Name = "application/vnd.ms-pki.pko")]
-        pko,
-        [contentTypeInfo(ExtensionName = "pl", Name = "application/x-perl")]
-        pl,
-        [contentTypeInfo(ExtensionName = "plg", Name = "text/html")]
-        plg,
-        [contentTypeInfo(ExtensionName = "pls", Name = "audio/scpls")]
-        pls,
-        [contentTypeInfo(ExtensionName = "png", Name = "image/png")]
-        png,
-        [contentTypeInfo(ExtensionName = "pot", Name = "application/vnd.ms-powerpoint")]
-        pot,
-        [contentTypeInfo(ExtensionName = "ppa", Name = "application/vnd.ms-powerpoint")]
-        ppa,
-        [contentTypeInfo(ExtensionName = "pps", Name = "application/vnd.ms-powerpoint")]
-        pps,
-        [contentTypeInfo(ExtensionName = "ppt", Name = "application/vnd.ms-powerpoint")]
-        ppt,
-        [contentTypeInfo(ExtensionName = "prf", Name = "application/pics-rules")]
-        prf,
-        [contentTypeInfo(ExtensionName = "ps", Name = "application/postscript")]
-        ps,
-        [contentTypeInfo(ExtensionName = "pwz", Name = "application/vnd.ms-powerpoint")]
-        pwz,
-        [contentTypeInfo(ExtensionName = "r3t", Name = "text/vnd.rn-realtext3d")]
-        r3t,
-        [contentTypeInfo(ExtensionName = "ra", Name = "audio/vnd.rn-realaudio")]
-        ra,
-        [contentTypeInfo(ExtensionName = "ram", Name = "audio/x-pn-realaudio")]
-        ram,
-        [contentTypeInfo(ExtensionName = "rat", Name = "application/rat-file")]
-        rat,
-        [contentTypeInfo(ExtensionName = "rdf", Name = "text/xml")]
-        rdf,
-        [contentTypeInfo(ExtensionName = "rec", Name = "application/vnd.rn-recording")]
-        rec,
-        [contentTypeInfo(ExtensionName = "rjs", Name = "application/vnd.rn-realsystem-rjs")]
-        rjs,
-        [contentTypeInfo(ExtensionName = "rjt", Name = "application/vnd.rn-realsystem-rjt")]
-        rjt,
-        [contentTypeInfo(ExtensionName = "rm", Name = "application/vnd.rn-realmedia")]
-        rm,
-        [contentTypeInfo(ExtensionName = "rmf", Name = "application/vnd.adobe.rmf")]
-        rmf,
-        [contentTypeInfo(ExtensionName = "rmi", Name = "audio/mid")]
-        rmi,
-        [contentTypeInfo(ExtensionName = "rmj", Name = "application/vnd.rn-realsystem-rmj")]
-        rmj,
-        [contentTypeInfo(ExtensionName = "rmm", Name = "audio/x-pn-realaudio")]
-        rmm,
-        [contentTypeInfo(ExtensionName = "rmp", Name = "application/vnd.rn-rn_music_package")]
-        rmp,
-        [contentTypeInfo(ExtensionName = "rms", Name = "application/vnd.rn-realmedia-secure")]
-        rms,
-        [contentTypeInfo(ExtensionName = "rmvb", Name = "application/vnd.rn-realmedia-vbr")]
-        rmvb,
-        [contentTypeInfo(ExtensionName = "rmx", Name = "application/vnd.rn-realsystem-rmx")]
-        rmx,
-        [contentTypeInfo(ExtensionName = "rnx", Name = "application/vnd.rn-realplayer")]
-        rnx,
-        [contentTypeInfo(ExtensionName = "rp", Name = "image/vnd.rn-realpix")]
-        rp,
-        [contentTypeInfo(ExtensionName = "rpm", Name = "audio/x-pn-realaudio-plugin")]
-        rpm,
-        [contentTypeInfo(ExtensionName = "rsml", Name = "application/vnd.rn-rsml")]
-        rsml,
-        [contentTypeInfo(ExtensionName = "rt", Name = "text/vnd.rn-realtext")]
-        rt,
-        [contentTypeInfo(ExtensionName = "rtf", Name = "application/msword")]
-        rtf,
-        [contentTypeInfo(ExtensionName = "rv", Name = "video/vnd.rn-realvideo")]
-        rv,
-        [contentTypeInfo(ExtensionName = "sit", Name = "application/x-stuffit")]
-        sit,
-        [contentTypeInfo(ExtensionName = "smi", Name = "application/smil")]
-        smi,
-        [contentTypeInfo(ExtensionName = "smil", Name = "application/smil")]
-        smil,
-        [contentTypeInfo(ExtensionName = "snd", Name = "audio/basic")]
-        snd,
-        [contentTypeInfo(ExtensionName = "sol", Name = "text/plain")]
-        sol,
-        [contentTypeInfo(ExtensionName = "sor", Name = "text/plain")]
-        sor,
-        [contentTypeInfo(ExtensionName = "spc", Name = "application/x-pkcs7-certificates")]
-        spc,
-        [contentTypeInfo(ExtensionName = "spl", Name = "application/futuresplash")]
-        spl,
-        [contentTypeInfo(ExtensionName = "spp", Name = "text/xml")]
-        spp,
-        [contentTypeInfo(ExtensionName = "ssm", Name = "application/streamingmedia")]
-        ssm,
-        [contentTypeInfo(ExtensionName = "sst", Name = "application/vnd.ms-pki.certstore")]
-        sst,
-        [contentTypeInfo(ExtensionName = "stl", Name = "application/vnd.ms-pki.stl")]
-        stl,
-        [contentTypeInfo(ExtensionName = "stm", Name = "text/html")]
-        stm,
-        [contentTypeInfo(ExtensionName = "svg", Name = "text/xml")]
-        svg,
-        [contentTypeInfo(ExtensionName = "swf", Name = "application/x-shockwave-flash")]
-        swf,
-        [contentTypeInfo(ExtensionName = "tif", Name = "image/tiff")]
-        tif,
-        [contentTypeInfo(ExtensionName = "tiff", Name = "image/tiff")]
-        tiff,
-        [contentTypeInfo(ExtensionName = "tld", Name = "text/xml")]
-        tld,
-        [contentTypeInfo(ExtensionName = "torrent", Name = "application/x-bittorrent")]
-        torrent,
-        [contentTypeInfo(ExtensionName = "tsd", Name = "text/xml")]
-        tsd,
-        [contentTypeInfo(ExtensionName = "txt", Name = "text/plain")]
-        txt,
-        [contentTypeInfo(ExtensionName = "uin", Name = "application/x-icq")]
-        uin,
-        [contentTypeInfo(ExtensionName = "uls", Name = "text/iuls")]
-        uls,
-        [contentTypeInfo(ExtensionName = "vcf", Name = "text/x-vcard")]
-        vcf,
-        [contentTypeInfo(ExtensionName = "vdx", Name = "application/vnd.visio")]
-        vdx,
-        [contentTypeInfo(ExtensionName = "vml", Name = "text/xml")]
-        vml,
-        [contentTypeInfo(ExtensionName = "vpg", Name = "application/x-vpeg005")]
-        vpg,
-        [contentTypeInfo(ExtensionName = "vsd", Name = "application/vnd.visio")]
-        vsd,
-        [contentTypeInfo(ExtensionName = "vss", Name = "application/vnd.visio")]
-        vss,
-        [contentTypeInfo(ExtensionName = "vst", Name = "application/vnd.visio")]
-        vst,
-        [contentTypeInfo(ExtensionName = "vsw", Name = "application/vnd.visio")]
-        vsw,
-        [contentTypeInfo(ExtensionName = "vsx", Name = "application/vnd.visio")]
-        vsx,
-        [contentTypeInfo(ExtensionName = "vtx", Name = "application/vnd.visio")]
-        vtx,
-        [contentTypeInfo(ExtensionName = "vxml", Name = "text/xml")]
-        vxml,
-        [contentTypeInfo(ExtensionName = "wav", Name = "audio/wav")]
-        wav,
-        [contentTypeInfo(ExtensionName = "wax", Name = "audio/x-ms-wax")]
-        wax,
-        [contentTypeInfo(ExtensionName = "wbmp", Name = "image/vnd.wap.wbmp")]
-        wbmp,
-        [contentTypeInfo(ExtensionName = "wiz", Name = "application/msword")]
-        wiz,
-        [contentTypeInfo(ExtensionName = "wm", Name = "video/x-ms-wm")]
-        wm,
-        [contentTypeInfo(ExtensionName = "wma", Name = "audio/x-ms-wma")]
-        wma,
-        [contentTypeInfo(ExtensionName = "wmd", Name = "application/x-ms-wmd")]
-        wmd,
-        [contentTypeInfo(ExtensionName = "wml", Name = "text/vnd.wap.wml")]
-        wml,
-        [contentTypeInfo(ExtensionName = "wmv", Name = "video/x-ms-wmv")]
-        wmv,
-        [contentTypeInfo(ExtensionName = "wmx", Name = "video/x-ms-wmx")]
-        wmx,
-        [contentTypeInfo(ExtensionName = "wmz", Name = "application/x-ms-wmz")]
-        wmz,
-        [contentTypeInfo(ExtensionName = "wpl", Name = "application/vnd.ms-wpl")]
-        wpl,
-        [contentTypeInfo(ExtensionName = "wsc", Name = "text/scriptlet")]
-        wsc,
-        [contentTypeInfo(ExtensionName = "wsdl", Name = "text/xml")]
-        wsdl,
-        [contentTypeInfo(ExtensionName = "wvx", Name = "video/x-ms-wvx")]
-        wvx,
-        [contentTypeInfo(ExtensionName = "xdp", Name = "application/vnd.adobe.xdp")]
-        xdp,
-        [contentTypeInfo(ExtensionName = "xdr", Name = "text/xml")]
-        xdr,
-        [contentTypeInfo(ExtensionName = "xfd", Name = "application/vnd.adobe.xfd")]
-        xfd,
-        [contentTypeInfo(ExtensionName = "xfdf", Name = "application/vnd.adobe.xfdf")]
-        xfdf,
-        [contentTypeInfo(ExtensionName = "xhtml", Name = "text/html")]
-        xhtml,
-        [contentTypeInfo(ExtensionName = "xls", Name = "application/vnd.ms-excel")]
-        xls,
-        [contentTypeInfo(ExtensionName = "xml", Name = "text/xml")]
-        xml,
-        [contentTypeInfo(ExtensionName = "xpl", Name = "audio/scpls")]
-        xpl,
-        [contentTypeInfo(ExtensionName = "xq", Name = "text/xml")]
-        xq,
-        [contentTypeInfo(ExtensionName = "xql", Name = "text/xml")]
-        xql,
-        [contentTypeInfo(ExtensionName = "xquery", Name = "text/xml")]
-        xquery,
-        [contentTypeInfo(ExtensionName = "xsd", Name = "text/xml")]
-        xsd,
-        [contentTypeInfo(ExtensionName = "xsl", Name = "text/xml")]
-        xsl,
-        [contentTypeInfo(ExtensionName = "xslt", Name = "text/xml")]
-        xslt,
+        [ContentTypeInfoPlus(ExtensionName = "*", Name = "application/octet-stream")] _,
+        [ContentTypeInfoPlus(ExtensionName = "323", Name = "text/h323")] _323,
+        [ContentTypeInfoPlus(ExtensionName = "907", Name = "drawing/907")] _907,
+        [ContentTypeInfoPlus(ExtensionName = "acp", Name = "audio/x-mei-aac")] acp,
+        [ContentTypeInfoPlus(ExtensionName = "ai", Name = "application/postscript")] ai,
+        [ContentTypeInfoPlus(ExtensionName = "aif", Name = "audio/aiff")] aif,
+        [ContentTypeInfoPlus(ExtensionName = "aifc", Name = "audio/aiff")] aifc,
+        [ContentTypeInfoPlus(ExtensionName = "aiff", Name = "audio/aiff")] aiff,
+        [ContentTypeInfoPlus(ExtensionName = "asa", Name = "text/asa")] asa,
+        [ContentTypeInfoPlus(ExtensionName = "asf", Name = "video/x-ms-asf")] asf,
+        [ContentTypeInfoPlus(ExtensionName = "asp", Name = "text/asp")] asp,
+        [ContentTypeInfoPlus(ExtensionName = "asx", Name = "video/x-ms-asf")] asx,
+        [ContentTypeInfoPlus(ExtensionName = "au", Name = "audio/basic")] au,
+        [ContentTypeInfoPlus(ExtensionName = "avi", Name = "video/avi")] avi,
+        [ContentTypeInfoPlus(ExtensionName = "awf", Name = "application/vnd.adobe.workflow")] awf,
+        [ContentTypeInfoPlus(ExtensionName = "biz", Name = "text/xml")] biz,
+        [ContentTypeInfoPlus(ExtensionName = "bmp", Name = "image/msbitmap")] bmp,
+        [ContentTypeInfoPlus(ExtensionName = "cat", Name = "application/vnd.ms-pki.seccat")] cat,
+        [ContentTypeInfoPlus(ExtensionName = "cdf", Name = "application/x-netcdf")] Cdf,
+        [ContentTypeInfoPlus(ExtensionName = "cer", Name = "application/x-x509-ca-cert")] cer,
+        [ContentTypeInfoPlus(ExtensionName = "class", Name = "java/*")] _class,
+        [ContentTypeInfoPlus(ExtensionName = "cml", Name = "text/xml")] cml,
+        [ContentTypeInfoPlus(ExtensionName = "crl", Name = "application/pkix-crl")] crl,
+        [ContentTypeInfoPlus(ExtensionName = "crt", Name = "application/x-x509-ca-cert")] crt,
+        [ContentTypeInfoPlus(ExtensionName = "css", Name = "text/css")] css,
+        [ContentTypeInfoPlus(ExtensionName = "cur", Name = "image/x-icon")] cur,
+        [ContentTypeInfoPlus(ExtensionName = "dcd", Name = "text/xml")] dcd,
+        [ContentTypeInfoPlus(ExtensionName = "der", Name = "application/x-x509-ca-cert")] der,
+        [ContentTypeInfoPlus(ExtensionName = "dll", Name = "application/x-msdownload")] dll,
+        [ContentTypeInfoPlus(ExtensionName = "doc", Name = "application/msword")] doc,
+        [ContentTypeInfoPlus(ExtensionName = "dot", Name = "application/msword")] dot,
+        [ContentTypeInfoPlus(ExtensionName = "dtd", Name = "text/xml")] dtd,
+        [ContentTypeInfoPlus(ExtensionName = "edn", Name = "application/vnd.adobe.edn")] edn,
+        [ContentTypeInfoPlus(ExtensionName = "eml", Name = "message/rfc822")] eml,
+        [ContentTypeInfoPlus(ExtensionName = "ent", Name = "text/xml")] ent,
+        [ContentTypeInfoPlus(ExtensionName = "eps", Name = "application/postscript")] eps,
+        [ContentTypeInfoPlus(ExtensionName = "exe", Name = "application/x-msdownload")] exe,
+        [ContentTypeInfoPlus(ExtensionName = "fax", Name = "image/fax")] fax,
+        [ContentTypeInfoPlus(ExtensionName = "fdf", Name = "application/vnd.fdf")] fdf,
+        [ContentTypeInfoPlus(ExtensionName = "fif", Name = "application/fractals")] fif,
+        [ContentTypeInfoPlus(ExtensionName = "fo", Name = "text/xml")] fo,
+        [ContentTypeInfoPlus(ExtensionName = "gif", Name = "image/gif")] gif,
+        [ContentTypeInfoPlus(ExtensionName = "hpg", Name = "application/x-hpgl")] hpg,
+        [ContentTypeInfoPlus(ExtensionName = "hqx", Name = "application/mac-binhex40")] hqx,
+        [ContentTypeInfoPlus(ExtensionName = "hta", Name = "application/hta")] hta,
+        [ContentTypeInfoPlus(ExtensionName = "htc", Name = "text/x-component")] htc,
+        [ContentTypeInfoPlus(ExtensionName = "htm", Name = "text/html")] htm,
+        [ContentTypeInfoPlus(ExtensionName = "html", Name = "text/html")] html,
+        [ContentTypeInfoPlus(ExtensionName = "htt", Name = "text/webviewhtml")] htt,
+        [ContentTypeInfoPlus(ExtensionName = "htx", Name = "text/html")] htx,
+        [ContentTypeInfoPlus(ExtensionName = "ico", Name = "image/x-icon")] ico,
+        [ContentTypeInfoPlus(ExtensionName = "iii", Name = "application/x-iphone")] iii,
+        [ContentTypeInfoPlus(ExtensionName = "img", Name = "application/x-img")] img,
+        [ContentTypeInfoPlus(ExtensionName = "ins", Name = "application/x-internet-signup")] ins,
+        [ContentTypeInfoPlus(ExtensionName = "isp", Name = "application/x-internet-signup")] isp,
+        [ContentTypeInfoPlus(ExtensionName = "java", Name = "java/*")] java,
+        [ContentTypeInfoPlus(ExtensionName = "jfif", Name = "image/jpeg")] jfif,
+        [ContentTypeInfoPlus(ExtensionName = "jpe", Name = "image/jpeg")] jpe,
+        [ContentTypeInfoPlus(ExtensionName = "jpeg", Name = "image/jpeg")] jpeg,
+        [ContentTypeInfoPlus(ExtensionName = "jpg", Name = "image/jpeg")] jpg,
+        [ContentTypeInfoPlus(ExtensionName = "js", Name = "application/x-javascript")] js,
+        [ContentTypeInfoPlus(ExtensionName = "jsp", Name = "text/html")] jsp,
+        [ContentTypeInfoPlus(ExtensionName = "la1", Name = "audio/x-liquid-file")] la1,
+        [ContentTypeInfoPlus(ExtensionName = "lar", Name = "application/x-laplayer-reg")] lar,
+        [ContentTypeInfoPlus(ExtensionName = "latex", Name = "application/x-latex")] latex,
+        [ContentTypeInfoPlus(ExtensionName = "lavs", Name = "audio/x-liquid-secure")] lavs,
+        [ContentTypeInfoPlus(ExtensionName = "lmsff", Name = "audio/x-la-lms")] lmsff,
+        [ContentTypeInfoPlus(ExtensionName = "ls", Name = "application/x-javascript")] ls,
+        [ContentTypeInfoPlus(ExtensionName = "m1v", Name = "video/x-mpeg")] m1v,
+        [ContentTypeInfoPlus(ExtensionName = "m2v", Name = "video/x-mpeg")] m2v,
+        [ContentTypeInfoPlus(ExtensionName = "m3u", Name = "audio/mpegurl")] m3u,
+        [ContentTypeInfoPlus(ExtensionName = "m4e", Name = "video/mpeg4")] m4e,
+        [ContentTypeInfoPlus(ExtensionName = "man", Name = "application/x-troff-man")] man,
+        [ContentTypeInfoPlus(ExtensionName = "math", Name = "text/xml")] math,
+        [ContentTypeInfoPlus(ExtensionName = "mdb", Name = "application/msaccess")] mdb,
+        [ContentTypeInfoPlus(ExtensionName = "mfp", Name = "application/x-shockwave-flash")] mfp,
+        [ContentTypeInfoPlus(ExtensionName = "mht", Name = "message/rfc822")] mht,
+        [ContentTypeInfoPlus(ExtensionName = "mhtml", Name = "message/rfc822")] mhtml,
+        [ContentTypeInfoPlus(ExtensionName = "mid", Name = "audio/mid")] mid,
+        [ContentTypeInfoPlus(ExtensionName = "midi", Name = "audio/mid")] midi,
+        [ContentTypeInfoPlus(ExtensionName = "mml", Name = "text/xml")] mml,
+        [ContentTypeInfoPlus(ExtensionName = "mnd", Name = "audio/x-musicnet-download")] mnd,
+        [ContentTypeInfoPlus(ExtensionName = "mns", Name = "audio/x-musicnet-stream")] mns,
+        [ContentTypeInfoPlus(ExtensionName = "mocha", Name = "application/x-javascript")] mocha,
+        [ContentTypeInfoPlus(ExtensionName = "movie", Name = "video/x-sgi-movie")] movie,
+        [ContentTypeInfoPlus(ExtensionName = "mp1", Name = "audio/mp1")] mp1,
+        [ContentTypeInfoPlus(ExtensionName = "mp2", Name = "audio/mp2")] mp2,
+        [ContentTypeInfoPlus(ExtensionName = "mp2v", Name = "video/mpeg")] mp2v,
+        [ContentTypeInfoPlus(ExtensionName = "mp3", Name = "audio/mp3")] mp3,
+        [ContentTypeInfoPlus(ExtensionName = "mp4", Name = "video/mpeg4")] mp4,
+        [ContentTypeInfoPlus(ExtensionName = "mpa", Name = "video/x-mpg")] mpa,
+        [ContentTypeInfoPlus(ExtensionName = "mpd", Name = "application/vnd.ms-project")] mpd,
+        [ContentTypeInfoPlus(ExtensionName = "mpe", Name = "video/x-mpeg")] mpe,
+        [ContentTypeInfoPlus(ExtensionName = "mpeg", Name = "video/mpg")] mpeg,
+        [ContentTypeInfoPlus(ExtensionName = "mpg", Name = "video/mpg")] mpg,
+        [ContentTypeInfoPlus(ExtensionName = "mpga", Name = "audio/rn-mpeg")] mpga,
+        [ContentTypeInfoPlus(ExtensionName = "mpp", Name = "application/vnd.ms-project")] mpp,
+        [ContentTypeInfoPlus(ExtensionName = "mps", Name = "video/x-mpeg")] mps,
+        [ContentTypeInfoPlus(ExtensionName = "mpt", Name = "application/vnd.ms-project")] mpt,
+        [ContentTypeInfoPlus(ExtensionName = "mpv", Name = "video/mpg")] mpv,
+        [ContentTypeInfoPlus(ExtensionName = "mpv2", Name = "video/mpeg")] mpv2,
+        [ContentTypeInfoPlus(ExtensionName = "mpw", Name = "application/vnd.ms-project")] mpw,
+        [ContentTypeInfoPlus(ExtensionName = "mpx", Name = "application/vnd.ms-project")] mpx,
+        [ContentTypeInfoPlus(ExtensionName = "mtx", Name = "text/xml")] mtx,
+        [ContentTypeInfoPlus(ExtensionName = "mxp", Name = "application/x-mmxp")] mxp,
+        [ContentTypeInfoPlus(ExtensionName = "net", Name = "image/pnetvue")] net,
+        [ContentTypeInfoPlus(ExtensionName = "nws", Name = "message/rfc822")] nws,
+        [ContentTypeInfoPlus(ExtensionName = "odc", Name = "text/x-ms-odc")] odc,
+        [ContentTypeInfoPlus(ExtensionName = "p10", Name = "application/pkcs10")] p10,
+        [ContentTypeInfoPlus(ExtensionName = "p12", Name = "application/x-pkcs12")] p12,
+        [ContentTypeInfoPlus(ExtensionName = "p7b", Name = "application/x-pkcs7-certificates")] p7b,
+        [ContentTypeInfoPlus(ExtensionName = "p7c", Name = "application/pkcs7-mime")] p7c,
+        [ContentTypeInfoPlus(ExtensionName = "p7m", Name = "application/pkcs7-mime")] p7m,
+        [ContentTypeInfoPlus(ExtensionName = "p7r", Name = "application/x-pkcs7-certreqresp")] p7r,
+        [ContentTypeInfoPlus(ExtensionName = "p7s", Name = "application/pkcs7-signature")] p7s,
+        [ContentTypeInfoPlus(ExtensionName = "pcx", Name = "image/x-pcx")] pcx,
+        [ContentTypeInfoPlus(ExtensionName = "pdf", Name = "application/pdf")] pdf,
+        [ContentTypeInfoPlus(ExtensionName = "pdx", Name = "application/vnd.adobe.pdx")] pdx,
+        [ContentTypeInfoPlus(ExtensionName = "pfx", Name = "application/x-pkcs12")] pfx,
+        [ContentTypeInfoPlus(ExtensionName = "pic", Name = "application/x-pic")] pic,
+        [ContentTypeInfoPlus(ExtensionName = "pko", Name = "application/vnd.ms-pki.pko")] pko,
+        [ContentTypeInfoPlus(ExtensionName = "pl", Name = "application/x-perl")] pl,
+        [ContentTypeInfoPlus(ExtensionName = "plg", Name = "text/html")] plg,
+        [ContentTypeInfoPlus(ExtensionName = "pls", Name = "audio/scpls")] pls,
+        [ContentTypeInfoPlus(ExtensionName = "png", Name = "image/png")] png,
+        [ContentTypeInfoPlus(ExtensionName = "pot", Name = "application/vnd.ms-powerpoint")] pot,
+        [ContentTypeInfoPlus(ExtensionName = "ppa", Name = "application/vnd.ms-powerpoint")] ppa,
+        [ContentTypeInfoPlus(ExtensionName = "pps", Name = "application/vnd.ms-powerpoint")] pps,
+        [ContentTypeInfoPlus(ExtensionName = "ppt", Name = "application/vnd.ms-powerpoint")] ppt,
+        [ContentTypeInfoPlus(ExtensionName = "prf", Name = "application/pics-rules")] prf,
+        [ContentTypeInfoPlus(ExtensionName = "ps", Name = "application/postscript")] ps,
+        [ContentTypeInfoPlus(ExtensionName = "pwz", Name = "application/vnd.ms-powerpoint")] pwz,
+        [ContentTypeInfoPlus(ExtensionName = "r3t", Name = "text/vnd.rn-realtext3d")] r3t,
+        [ContentTypeInfoPlus(ExtensionName = "ra", Name = "audio/vnd.rn-realaudio")] ra,
+        [ContentTypeInfoPlus(ExtensionName = "ram", Name = "audio/x-pn-realaudio")] ram,
+        [ContentTypeInfoPlus(ExtensionName = "rat", Name = "application/rat-file")] rat,
+        [ContentTypeInfoPlus(ExtensionName = "rdf", Name = "text/xml")] rdf,
+        [ContentTypeInfoPlus(ExtensionName = "rec", Name = "application/vnd.rn-recording")] rec,
+        [ContentTypeInfoPlus(ExtensionName = "rjs", Name = "application/vnd.rn-realsystem-rjs")] rjs,
+        [ContentTypeInfoPlus(ExtensionName = "rjt", Name = "application/vnd.rn-realsystem-rjt")] rjt,
+        [ContentTypeInfoPlus(ExtensionName = "rm", Name = "application/vnd.rn-realmedia")] rm,
+        [ContentTypeInfoPlus(ExtensionName = "rmf", Name = "application/vnd.adobe.rmf")] rmf,
+        [ContentTypeInfoPlus(ExtensionName = "rmi", Name = "audio/mid")] rmi,
+        [ContentTypeInfoPlus(ExtensionName = "rmj", Name = "application/vnd.rn-realsystem-rmj")] rmj,
+        [ContentTypeInfoPlus(ExtensionName = "rmm", Name = "audio/x-pn-realaudio")] rmm,
+        [ContentTypeInfoPlus(ExtensionName = "rmp", Name = "application/vnd.rn-rn_music_package")] rmp,
+        [ContentTypeInfoPlus(ExtensionName = "rms", Name = "application/vnd.rn-realmedia-secure")] rms,
+        [ContentTypeInfoPlus(ExtensionName = "rmvb", Name = "application/vnd.rn-realmedia-vbr")] rmvb,
+        [ContentTypeInfoPlus(ExtensionName = "rmx", Name = "application/vnd.rn-realsystem-rmx")] rmx,
+        [ContentTypeInfoPlus(ExtensionName = "rnx", Name = "application/vnd.rn-realplayer")] rnx,
+        [ContentTypeInfoPlus(ExtensionName = "rp", Name = "image/vnd.rn-realpix")] rp,
+        [ContentTypeInfoPlus(ExtensionName = "rpm", Name = "audio/x-pn-realaudio-plugin")] rpm,
+        [ContentTypeInfoPlus(ExtensionName = "rsml", Name = "application/vnd.rn-rsml")] rsml,
+        [ContentTypeInfoPlus(ExtensionName = "rt", Name = "text/vnd.rn-realtext")] rt,
+        [ContentTypeInfoPlus(ExtensionName = "rtf", Name = "application/msword")] rtf,
+        [ContentTypeInfoPlus(ExtensionName = "rv", Name = "video/vnd.rn-realvideo")] rv,
+        [ContentTypeInfoPlus(ExtensionName = "sit", Name = "application/x-stuffit")] sit,
+        [ContentTypeInfoPlus(ExtensionName = "smi", Name = "application/smil")] smi,
+        [ContentTypeInfoPlus(ExtensionName = "smil", Name = "application/smil")] smil,
+        [ContentTypeInfoPlus(ExtensionName = "snd", Name = "audio/basic")] snd,
+        [ContentTypeInfoPlus(ExtensionName = "sol", Name = "text/plain")] sol,
+        [ContentTypeInfoPlus(ExtensionName = "sor", Name = "text/plain")] sor,
+        [ContentTypeInfoPlus(ExtensionName = "spc", Name = "application/x-pkcs7-certificates")] spc,
+        [ContentTypeInfoPlus(ExtensionName = "spl", Name = "application/futuresplash")] spl,
+        [ContentTypeInfoPlus(ExtensionName = "spp", Name = "text/xml")] spp,
+        [ContentTypeInfoPlus(ExtensionName = "ssm", Name = "application/streamingmedia")] ssm,
+        [ContentTypeInfoPlus(ExtensionName = "sst", Name = "application/vnd.ms-pki.certstore")] sst,
+        [ContentTypeInfoPlus(ExtensionName = "stl", Name = "application/vnd.ms-pki.stl")] stl,
+        [ContentTypeInfoPlus(ExtensionName = "stm", Name = "text/html")] stm,
+        [ContentTypeInfoPlus(ExtensionName = "svg", Name = "text/xml")] svg,
+        [ContentTypeInfoPlus(ExtensionName = "swf", Name = "application/x-shockwave-flash")] swf,
+        [ContentTypeInfoPlus(ExtensionName = "tif", Name = "image/tiff")] tif,
+        [ContentTypeInfoPlus(ExtensionName = "tiff", Name = "image/tiff")] tiff,
+        [ContentTypeInfoPlus(ExtensionName = "tld", Name = "text/xml")] tld,
+        [ContentTypeInfoPlus(ExtensionName = "torrent", Name = "application/x-bittorrent")] torrent,
+        [ContentTypeInfoPlus(ExtensionName = "tsd", Name = "text/xml")] tsd,
+        [ContentTypeInfoPlus(ExtensionName = "txt", Name = "text/plain")] txt,
+        [ContentTypeInfoPlus(ExtensionName = "uin", Name = "application/x-icq")] uin,
+        [ContentTypeInfoPlus(ExtensionName = "uls", Name = "text/iuls")] uls,
+        [ContentTypeInfoPlus(ExtensionName = "vcf", Name = "text/x-vcard")] vcf,
+        [ContentTypeInfoPlus(ExtensionName = "vdx", Name = "application/vnd.visio")] vdx,
+        [ContentTypeInfoPlus(ExtensionName = "vml", Name = "text/xml")] vml,
+        [ContentTypeInfoPlus(ExtensionName = "vpg", Name = "application/x-vpeg005")] vpg,
+        [ContentTypeInfoPlus(ExtensionName = "vsd", Name = "application/vnd.visio")] vsd,
+        [ContentTypeInfoPlus(ExtensionName = "vss", Name = "application/vnd.visio")] vss,
+        [ContentTypeInfoPlus(ExtensionName = "vst", Name = "application/vnd.visio")] vst,
+        [ContentTypeInfoPlus(ExtensionName = "vsw", Name = "application/vnd.visio")] vsw,
+        [ContentTypeInfoPlus(ExtensionName = "vsx", Name = "application/vnd.visio")] vsx,
+        [ContentTypeInfoPlus(ExtensionName = "vtx", Name = "application/vnd.visio")] vtx,
+        [ContentTypeInfoPlus(ExtensionName = "vxml", Name = "text/xml")] vxml,
+        [ContentTypeInfoPlus(ExtensionName = "wav", Name = "audio/wav")] wav,
+        [ContentTypeInfoPlus(ExtensionName = "wax", Name = "audio/x-ms-wax")] wax,
+        [ContentTypeInfoPlus(ExtensionName = "wbmp", Name = "image/vnd.wap.wbmp")] wbmp,
+        [ContentTypeInfoPlus(ExtensionName = "wiz", Name = "application/msword")] wiz,
+        [ContentTypeInfoPlus(ExtensionName = "wm", Name = "video/x-ms-wm")] wm,
+        [ContentTypeInfoPlus(ExtensionName = "wma", Name = "audio/x-ms-wma")] wma,
+        [ContentTypeInfoPlus(ExtensionName = "wmd", Name = "application/x-ms-wmd")] wmd,
+        [ContentTypeInfoPlus(ExtensionName = "wml", Name = "text/vnd.wap.wml")] wml,
+        [ContentTypeInfoPlus(ExtensionName = "wmv", Name = "video/x-ms-wmv")] wmv,
+        [ContentTypeInfoPlus(ExtensionName = "wmx", Name = "video/x-ms-wmx")] wmx,
+        [ContentTypeInfoPlus(ExtensionName = "wmz", Name = "application/x-ms-wmz")] wmz,
+        [ContentTypeInfoPlus(ExtensionName = "wpl", Name = "application/vnd.ms-wpl")] wpl,
+        [ContentTypeInfoPlus(ExtensionName = "wsc", Name = "text/scriptlet")] wsc,
+        [ContentTypeInfoPlus(ExtensionName = "wsdl", Name = "text/xml")] wsdl,
+        [ContentTypeInfoPlus(ExtensionName = "wvx", Name = "video/x-ms-wvx")] wvx,
+        [ContentTypeInfoPlus(ExtensionName = "xdp", Name = "application/vnd.adobe.xdp")] xdp,
+        [ContentTypeInfoPlus(ExtensionName = "xdr", Name = "text/xml")] xdr,
+        [ContentTypeInfoPlus(ExtensionName = "xfd", Name = "application/vnd.adobe.xfd")] xfd,
+        [ContentTypeInfoPlus(ExtensionName = "xfdf", Name = "application/vnd.adobe.xfdf")] xfdf,
+        [ContentTypeInfoPlus(ExtensionName = "xhtml", Name = "text/html")] xhtml,
+        [ContentTypeInfoPlus(ExtensionName = "xls", Name = "application/vnd.ms-excel")] xls,
+        [ContentTypeInfoPlus(ExtensionName = "xml", Name = "text/xml")] xml,
+        [ContentTypeInfoPlus(ExtensionName = "xpl", Name = "audio/scpls")] xpl,
+        [ContentTypeInfoPlus(ExtensionName = "xq", Name = "text/xml")] xq,
+        [ContentTypeInfoPlus(ExtensionName = "xql", Name = "text/xml")] xql,
+        [ContentTypeInfoPlus(ExtensionName = "xquery", Name = "text/xml")] xquery,
+        [ContentTypeInfoPlus(ExtensionName = "xsd", Name = "text/xml")] xsd,
+        [ContentTypeInfoPlus(ExtensionName = "xsl", Name = "text/xml")] xsl,
+        [ContentTypeInfoPlus(ExtensionName = "xslt", Name = "text/xml")] xslt
     }
 }

@@ -21,38 +21,64 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using TerumoMIS.CoreLibrary.Threading;
 
 namespace TerumoMIS.CoreLibrary.Code
 {
     /// <summary>
-    /// 自定义函数属性信息
+    ///     自定义函数属性信息
     /// </summary>
     public struct AttributeMethodStruct
     {
         /// <summary>
-        /// 函数信息
+        ///     自定义属性函数信息集合
         /// </summary>
-        public MethodInfo Method;
+        private static InterlockedPlus.DictionaryStruct<Type, AttributeMethodStruct[]> _methods =
+            new InterlockedPlus.DictionaryStruct<Type, AttributeMethodStruct[]>(
+                DictionaryPlus.CreateOnly<Type, AttributeMethodStruct[]>());
+
         /// <summary>
-        /// 自定义属性集合
+        ///     自定义属性函数信息集合访问锁
+        /// </summary>
+        private static readonly object CreateLock = new object();
+
+        /// <summary>
+        ///     自定义属性函数信息集合
+        /// </summary>
+        private static InterlockedPlus.DictionaryStruct<Type, AttributeMethodStruct[]> _staticMethods =
+            new InterlockedPlus.DictionaryStruct<Type, AttributeMethodStruct[]>(
+                DictionaryPlus.CreateOnly<Type, AttributeMethodStruct[]>());
+
+        /// <summary>
+        ///     自定义属性函数信息集合访问锁
+        /// </summary>
+        private static readonly object CreateStaticLock = new object();
+
+        /// <summary>
+        ///     自定义属性集合
         /// </summary>
         private object[] _attributes;
+
         /// <summary>
-        /// 获取自定义属性集合
+        ///     函数信息
+        /// </summary>
+        public MethodInfo Method;
+
+        /// <summary>
+        ///     获取自定义属性集合
         /// </summary>
         /// <typeparam name="TAttributeType"></typeparam>
         /// <returns></returns>
         internal IEnumerable<TAttributeType> Attributes<TAttributeType>() where TAttributeType : Attribute
         {
-            return _attributes.Where(value => typeof(TAttributeType).IsAssignableFrom(value.GetType())).Cast<TAttributeType>();
+            return
+                _attributes.Where(value => typeof (TAttributeType).IsAssignableFrom(value.GetType()))
+                    .Cast<TAttributeType>();
         }
 
         /// <summary>
-        /// 根据成员属性获取自定义属性
+        ///     根据成员属性获取自定义属性
         /// </summary>
         /// <typeparam name="TAttributeType">自定义属性类型</typeparam>
         /// <param name="isInheritAttribute">是否包含继承属性</param>
@@ -66,7 +92,7 @@ namespace TerumoMIS.CoreLibrary.Code
                 if (isInheritAttribute)
                 {
                     var depth = 0;
-                    for (var type = attribute.GetType(); type != typeof(TAttributeType); type = type.BaseType) ++depth;
+                    for (var type = attribute.GetType(); type != typeof (TAttributeType); type = type.BaseType) ++depth;
                     if (depth < minDepth)
                     {
                         if (depth == 0) return attribute;
@@ -74,20 +100,13 @@ namespace TerumoMIS.CoreLibrary.Code
                         value = attribute;
                     }
                 }
-                else if (attribute.GetType() == typeof(TAttributeType)) return attribute;
+                else if (attribute.GetType() == typeof (TAttributeType)) return attribute;
             }
             return value;
         }
+
         /// <summary>
-        /// 自定义属性函数信息集合
-        /// </summary>
-        private static InterlockedPlus.DictionaryStruct<Type, AttributeMethodStruct[]> _methods = new InterlockedPlus.DictionaryStruct<Type, AttributeMethodStruct[]>(DictionaryPlus.CreateOnly<Type, AttributeMethodStruct[]>());
-        /// <summary>
-        /// 自定义属性函数信息集合访问锁
-        /// </summary>
-        private static readonly object CreateLock = new object();
-        /// <summary>
-        /// 根据类型获取自定义属性函数信息集合
+        ///     根据类型获取自定义属性函数信息集合
         /// </summary>
         /// <param name="type">对象类型</param>
         /// <returns>自定义属性函数信息集合</returns>
@@ -100,26 +119,24 @@ namespace TerumoMIS.CoreLibrary.Code
             {
                 if (_methods.TryGetValue(type, out values)) return values;
                 var array = default(SubArrayStruct<AttributeMethodStruct>);
-                foreach (var method in type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                foreach (
+                    var method in type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
                 {
                     var attributes = method.GetCustomAttributes(true);
-                    if (attributes.Length != 0) array.Add(new AttributeMethodStruct { Method = method, _attributes = attributes });
+                    if (attributes.Length != 0)
+                        array.Add(new AttributeMethodStruct {Method = method, _attributes = attributes});
                 }
                 _methods.Set(type, values = array.ToArray());
             }
-            finally { Monitor.Exit(CreateLock); }
+            finally
+            {
+                Monitor.Exit(CreateLock);
+            }
             return values;
         }
+
         /// <summary>
-        /// 自定义属性函数信息集合
-        /// </summary>
-        private static InterlockedPlus.DictionaryStruct<Type, AttributeMethodStruct[]> _staticMethods = new InterlockedPlus.DictionaryStruct<Type, AttributeMethodStruct[]>(DictionaryPlus.CreateOnly<Type, AttributeMethodStruct[]>());
-        /// <summary>
-        /// 自定义属性函数信息集合访问锁
-        /// </summary>
-        private static readonly object CreateStaticLock = new object();
-        /// <summary>
-        /// 根据类型获取自定义属性函数信息集合
+        ///     根据类型获取自定义属性函数信息集合
         /// </summary>
         /// <param name="type">对象类型</param>
         /// <returns>自定义属性函数信息集合</returns>
@@ -132,14 +149,19 @@ namespace TerumoMIS.CoreLibrary.Code
             {
                 if (_staticMethods.TryGetValue(type, out values)) return values;
                 var array = default(SubArrayStruct<AttributeMethodStruct>);
-                foreach (var method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
+                foreach (
+                    var method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
                 {
-                    object[] attributes = method.GetCustomAttributes(true);
-                    if (attributes.Length != 0) array.Add(new AttributeMethodStruct { Method = method, _attributes = attributes });
+                    var attributes = method.GetCustomAttributes(true);
+                    if (attributes.Length != 0)
+                        array.Add(new AttributeMethodStruct {Method = method, _attributes = attributes});
                 }
                 _staticMethods.Set(type, values = array.ToArray());
             }
-            finally { Monitor.Exit(CreateStaticLock); }
+            finally
+            {
+                Monitor.Exit(CreateStaticLock);
+            }
             return values;
         }
     }

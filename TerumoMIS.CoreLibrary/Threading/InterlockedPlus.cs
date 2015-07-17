@@ -25,12 +25,12 @@ using System.Threading;
 namespace TerumoMIS.CoreLibrary.Threading
 {
     /// <summary>
-    /// 原子操作扩张
+    ///     原子操作扩张
     /// </summary>
     public static class InterlockedPlus
     {
         /// <summary>
-        /// 将目标值从0改置为1,循环等待周期切换(适应于等待时间极短的情况)
+        ///     将目标值从0改置为1,循环等待周期切换(适应于等待时间极短的情况)
         /// </summary>
         /// <param name="value">目标值</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -38,27 +38,28 @@ namespace TerumoMIS.CoreLibrary.Threading
         {
             while (Interlocked.CompareExchange(ref value, 1, 0) != 0) Thread.Sleep(0);
         }
+
         /// <summary>
-        /// 将目标值从0改置为1,循环等待周期切换(适应于等待时间极短的情况)
+        ///     将目标值从0改置为1,循环等待周期切换(适应于等待时间极短的情况)
         /// </summary>
         /// <param name="value">目标值</param>
         public static void CompareSetSleep0(ref int value)
         {
             if (Interlocked.CompareExchange(ref value, 1, 0) != 0)
             {
-                DateTime time = DatePlus.NowSecond.AddSeconds(2);
+                var time = DatePlus.NowSecond.AddSeconds(2);
                 do
                 {
                     Thread.Sleep(0);
                     if (Interlocked.CompareExchange(ref value, 1, 0) == 0) return;
-                }
-                while (DatePlus.NowSecond < time);
+                } while (DatePlus.NowSecond < time);
                 LogPlus.Error.Add("可能出现死锁", true);
                 while (Interlocked.CompareExchange(ref value, 1, 0) != 0) Thread.Sleep(0);
             }
         }
+
         /// <summary>
-        /// 将目标值从0改置为1,循环等待周期切换(适应于等待时间较短的情况)
+        ///     将目标值从0改置为1,循环等待周期切换(适应于等待时间较短的情况)
         /// </summary>
         /// <param name="value">目标值</param>
         public static void CompareSetSleep1(ref int value)
@@ -68,20 +69,20 @@ namespace TerumoMIS.CoreLibrary.Threading
                 Thread.Sleep(0);
                 if (Interlocked.CompareExchange(ref value, 1, 0) != 0)
                 {
-                    DateTime time = DatePlus.NowSecond.AddSeconds(2);
+                    var time = DatePlus.NowSecond.AddSeconds(2);
                     do
                     {
                         Thread.Sleep(1);
                         if (Interlocked.CompareExchange(ref value, 1, 0) == 0) return;
-                    }
-                    while (DatePlus.NowSecond < time);
+                    } while (DatePlus.NowSecond < time);
                     LogPlus.Default.Add("线程等待时间过长", true);
                     while (Interlocked.CompareExchange(ref value, 1, 0) != 0) Thread.Sleep(1);
                 }
             }
         }
+
         /// <summary>
-        /// 将目标值从0改置为1,循环等待周期固定(适应于等待时间可能较长的情况)
+        ///     将目标值从0改置为1,循环等待周期固定(适应于等待时间可能较长的情况)
         /// </summary>
         /// <param name="value">目标值</param>
         /// <param name="logSeconds">输入日志秒数</param>
@@ -89,19 +90,19 @@ namespace TerumoMIS.CoreLibrary.Threading
         {
             if (Interlocked.CompareExchange(ref value, 1, 0) != 0)
             {
-                DateTime time = DatePlus.NowSecond.AddSeconds(logSeconds + 1);
+                var time = DatePlus.NowSecond.AddSeconds(logSeconds + 1);
                 do
                 {
                     Thread.Sleep(1);
                     if (Interlocked.CompareExchange(ref value, 1, 0) == 0) return;
-                }
-                while (DatePlus.NowSecond < time);
+                } while (DatePlus.NowSecond < time);
                 LogPlus.Default.Add("线程等待时间过长", true);
                 while (Interlocked.CompareExchange(ref value, 1, 0) != 0) Thread.Sleep(1);
             }
         }
+
         /// <summary>
-        /// 等待单次运行
+        ///     等待单次运行
         /// </summary>
         /// <param name="runState">执行状态,0表示未运行,1表示运行中,2表示已经运行</param>
         /// <param name="run">执行委托</param>
@@ -114,30 +115,36 @@ namespace TerumoMIS.CoreLibrary.Threading
                 {
                     run();
                 }
-                finally { runState = 2; }
+                finally
+                {
+                    runState = 2;
+                }
             }
             else if (isRun == 1)
             {
                 while (runState == 1) Thread.Sleep(1);
             }
         }
+
         /// <summary>
-        /// 字典
+        ///     字典
         /// </summary>
         /// <typeparam name="TKeyType"></typeparam>
         /// <typeparam name="TValueType"></typeparam>
         public struct DictionaryStruct<TKeyType, TValueType>
         {
             /// <summary>
-            /// 字典
+            ///     字典
             /// </summary>
             private readonly Dictionary<TKeyType, TValueType> _values;
+
             /// <summary>
-            /// 访问锁
+            ///     访问锁
             /// </summary>
             private int _valueLock;
+
             /// <summary>
-            /// 字典
+            ///     字典
             /// </summary>
             /// <param name="values"></param>
             public DictionaryStruct(Dictionary<TKeyType, TValueType> values)
@@ -146,8 +153,9 @@ namespace TerumoMIS.CoreLibrary.Threading
                 _values = values;
                 _valueLock = 0;
             }
+
             /// <summary>
-            /// 获取数据
+            ///     获取数据
             /// </summary>
             /// <param name="key"></param>
             /// <param name="value"></param>
@@ -163,8 +171,9 @@ namespace TerumoMIS.CoreLibrary.Threading
                 _valueLock = 0;
                 return false;
             }
+
             /// <summary>
-            /// 设置数据
+            ///     设置数据
             /// </summary>
             /// <param name="key"></param>
             /// <param name="value"></param>
@@ -175,11 +184,14 @@ namespace TerumoMIS.CoreLibrary.Threading
                 {
                     _values[key] = value;
                 }
-                finally { _valueLock = 0; }
+                finally
+                {
+                    _valueLock = 0;
+                }
             }
 
             /// <summary>
-            /// 获取数据
+            ///     获取数据
             /// </summary>
             /// <param name="key"></param>
             /// <param name="value"></param>
@@ -194,49 +206,53 @@ namespace TerumoMIS.CoreLibrary.Threading
                     {
                         _values[key] = value;
                     }
-                    finally { _valueLock = 0; }
+                    finally
+                    {
+                        _valueLock = 0;
+                    }
                     return true;
                 }
                 try
                 {
                     _values.Add(key, value);
                 }
-                finally { _valueLock = 0; }
+                finally
+                {
+                    _valueLock = 0;
+                }
                 return false;
             }
         }
+
         /// <summary>
-        /// 字典
+        ///     字典
         /// </summary>
         /// <typeparam name="TKeyType"></typeparam>
         /// <typeparam name="TValueType"></typeparam>
         public struct LastDictionaryStruct<TKeyType, TValueType> where TKeyType : struct, IEquatable<TKeyType>
         {
             /// <summary>
-            /// 字典
+            ///     字典
             /// </summary>
             private readonly Dictionary<TKeyType, TValueType> _values;
+
             /// <summary>
-            /// 访问锁
-            /// </summary>
-            private int _valueLock;
-            /// <summary>
-            /// 最后一次访问的关键字
+            ///     最后一次访问的关键字
             /// </summary>
             private TKeyType _lastKey;
+
             /// <summary>
-            /// 最后一次访问的数据
+            ///     最后一次访问的数据
             /// </summary>
             private TValueType _lastValue;
+
             /// <summary>
-            /// 是否空字典
+            ///     访问锁
             /// </summary>
-            public bool IsNull
-            {
-                get { return _values == null; }
-            }
+            private int _valueLock;
+
             /// <summary>
-            /// 字典
+            ///     字典
             /// </summary>
             /// <param name="values"></param>
             public LastDictionaryStruct(Dictionary<TKeyType, TValueType> values)
@@ -247,8 +263,17 @@ namespace TerumoMIS.CoreLibrary.Threading
                 _lastKey = default(TKeyType);
                 _lastValue = default(TValueType);
             }
+
             /// <summary>
-            /// 获取数据
+            ///     是否空字典
+            /// </summary>
+            public bool IsNull
+            {
+                get { return _values == null; }
+            }
+
+            /// <summary>
+            ///     获取数据
             /// </summary>
             /// <param name="key"></param>
             /// <param name="value"></param>
@@ -272,8 +297,9 @@ namespace TerumoMIS.CoreLibrary.Threading
                 _valueLock = 0;
                 return false;
             }
+
             /// <summary>
-            /// 设置数据
+            ///     设置数据
             /// </summary>
             /// <param name="key"></param>
             /// <param name="value"></param>
@@ -284,7 +310,10 @@ namespace TerumoMIS.CoreLibrary.Threading
                 {
                     _values[_lastKey = key] = _lastValue = value;
                 }
-                finally { _valueLock = 0; }
+                finally
+                {
+                    _valueLock = 0;
+                }
             }
         }
     }
